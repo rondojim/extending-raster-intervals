@@ -115,11 +115,11 @@ private:
   // double idx_to_coord(int idx, double xmin);
 
   // i_pos, nxt_i_pos describe the side of a point and each next: 
-  // wrt to another segment: < 0 on the left, > 0 on the right else on 
+  // wrt to another segment: < 0 on the left, > 0 on the right else on
   // the other segment. Based on that insert points in left_vert_clipped_points,
-  // right_vert_clipped_points. For the first vector the visible side is the 
-  // left while fot the second the right
-  void split_points(int i_pos_sigh, int nxt_i_pos_sigh, const Point *p_inter,
+  // right_vert_clipped_points according to hodgman algo. For the first vector 
+  // the visible side is the left while fot the second the right
+  void hodgman_clip_segment(int i_pos_sigh, int nxt_i_pos_sigh, const Point *p_inter,
                     const Point *p_nxt_i,
                     std::vector<const Point *> &left_vert_clipped_points,
                     std::vector<const Point *> &right_vert_clipped_points,
@@ -130,14 +130,6 @@ private:
   bool is_certain_full_cell(const std::vector<const Point *> &vertices,
                             const Point &p1, const Point &p2,
                             bool debug = false);
-
-  // return the encoding of the vertices_vectors which is
-  // in the cell with the bottom corners p1,p2
-  // the clipped polygon wrt to the cell area 
-  BinaryCellCode
-  encode(std::vector<std::vector<const Point *>> &vertices_vectors,
-         const Point &p1, const Point &p2, 
-         bool debug = false);
 
   // clip the polygon with vertices elements (should be in cw order)
   // w.r.t. clipper line with points x1, y1, x2, y2
@@ -210,6 +202,14 @@ private:
   bool set_segment_borders_types(const Point &p1, const Point &p2, 
     std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo> &i_j_to_rcell_info);
 
+  // return the R encoding of the vertices_vectors which is
+  // in the cell with the bottom corners p1,p2
+  // the clipped polygon wrt to the cell area 
+  BinaryCellCode
+  encode(std::vector<std::vector<const Point *>> &vertices_vectors,
+         const Point &p1, const Point &p2, 
+         bool debug = false);
+
 
 public:
   std::vector<Point *> allocated_points;
@@ -263,7 +263,8 @@ public:
    std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo> &i_j_to_rcell_info, const char *mode);
 };
 
-
+// rasterize the lhs_polygons, rhs_polygons and save their 
+// raster representation in the lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info
 bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::vector<Polygon> &rhs_polygons,
                         std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,

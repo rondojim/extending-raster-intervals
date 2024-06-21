@@ -4,7 +4,7 @@
 #include <iostream>
 #include <map>
 
-void RasterGrid::split_points(
+void RasterGrid::hodgman_clip_segment(
     int i_pos_sigh, int nxt_i_pos_sigh, const Point *p_inter, const Point *p_nxt_i,
     std::vector<const Point *> &left_vert_clipped_points,
     std::vector<const Point *> &right_vert_clipped_points, bool debug) {
@@ -98,7 +98,7 @@ bool RasterGrid::hodgman_clip(const std::vector<const Point *> &vertices,
       }
     }
 
-    split_points(i_pos_sigh, nxt_i_pos_sigh, p_inter, p_nxt_i, left_vert_clipped_points,
+    hodgman_clip_segment(i_pos_sigh, nxt_i_pos_sigh, p_inter, p_nxt_i, left_vert_clipped_points,
                  right_vert_clipped_points, debug);
   }
 
@@ -124,6 +124,8 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
     return false;
   }
 
+  // Find the corners of the grid 
+  // that enclose the polygon mbr 
   double xmin =
       max_below_or_equal_k(min_corner.x, max_corner.x, polygon.minCorner.x);
   double ymin =
@@ -140,12 +142,20 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
     return false;
   }
 
+  // Find the rows, columns indexes of previous coordinates on the mbr
   int xmin_idx = sequence_idx(xmin, min_corner.x);
   int xmax_idx = sequence_idx(xmax, min_corner.x);
 
   int ymin_idx = sequence_idx(ymin, min_corner.y);
   int ymax_idx = sequence_idx(ymax, min_corner.y);
 
+  // we will clip the polygon first vertically (per column)
+  // and the resulting clipped polygons will be clipped horizontally
+  // to take the final resulting clipped polygons per cell of the grid
+  // When clipping wrt to a column (vertically), the left side column will be fully clipped
+  // and for the next (right column) we will use the remaining polygon which
+  // fall is in the the right of the column which is refered as semi/right clipped 
+  // the same holds for the horizontal clipping starting from top to bottom
 
   std::vector<const Point*> fully_vert_clipped_vertices, semi_vert_clipped_vertices, 
       cur_vert_clipped_vertices, fully_hori_clipped_vertices, 
@@ -160,6 +170,8 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
       fully_vert_clipped_vertices.clear();
 
       if (j == xmax_idx - 1) {
+          // in the second to last column the semi_vert_clipped_vertices, ie
+          // the remaining clipped vertices are fully clipped (being left to the last col)
           cur_hori_clipped_vertices = semi_vert_clipped_vertices;
       }
       else {
@@ -189,6 +201,8 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
           if (i == ymin_idx) {
 
               if (semi_hori_clipped_vertices.size()) {
+                  // in the second to last row the semi_hori_clipped_vertices, ie
+                  // the remaining clipped vertices are fully clipped (being up to the last row)
                   std::vector<std::vector<const Point*>> semi_hori_clipped_vertices_vec = {semi_hori_clipped_vertices};
                   BinaryCellCode cell_code =
                       encode(semi_hori_clipped_vertices_vec, p1_hori, p2_hori);
