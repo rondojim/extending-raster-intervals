@@ -24,9 +24,6 @@ void mbr_combined_sweep(
   mbr_no_outside(lhs, rhs, compress, MAXX, MAXY, result);
   mbr_no_inside(lhs, rhs, compress, MAXX, MAXY, result);
 
-  // Print the number of results
-  printf("%zu\n", result.size());
-
   // Populate the final result with intersecting polygons
   for (auto &it : result) {
     if (it > 0) {

@@ -58,25 +58,7 @@ void mbr_no_outside(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
   std::vector<mbr> mlhs; // Vector to store MBRs of lhs polygons
   std::vector<mbr> mrhs; // Vector to store MBRs of rhs polygons
 
-  // Compress coordinates for lhs polygons and store in mlhs
-  for (auto &it : lhs) {
-    int min_x = compress[{0, it.polygon_id}];
-    int max_x = compress[{2, it.polygon_id}];
-    int min_y = compress[{1, it.polygon_id}];
-    int max_y = compress[{3, it.polygon_id}];
-    mbr cur({min_x, min_y}, {max_x, max_y}, it.polygon_id);
-    mlhs.push_back(cur);
-  }
-
-  // Compress coordinates for rhs polygons and store in mrhs
-  for (auto &it : rhs) {
-    int min_x = compress[{0, it.polygon_id}];
-    int max_x = compress[{2, it.polygon_id}];
-    int min_y = compress[{1, it.polygon_id}];
-    int max_y = compress[{3, it.polygon_id}];
-    mbr cur({min_x, min_y}, {max_x, max_y}, it.polygon_id);
-    mrhs.push_back(cur);
-  }
+  create_mbr_vectors(lhs, rhs, mlhs, mrhs, compress);
 
   // Update the segment tree with points from mlhs
   for (auto &it : mlhs) {

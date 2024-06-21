@@ -1,5 +1,6 @@
 #include "../../include/utils/compressing.h"
 #include "../../include/utils/geometry_types.h"
+#include "../../include/utils/minimum_bounding_rectangle.h"
 #include "../../include/utils/node.h"
 #include "../../include/utils/progressbar.hpp"
 #include <algorithm>
@@ -9,13 +10,6 @@
 #include <map>
 #include <set>
 #include <vector>
-
-// Structure representing a Minimum Bounding Rectangle (MBR)
-struct mbr {
-  std::pair<int, int> minc; // Minimum corner coordinates
-  std::pair<int, int> maxc; // Maximum corner coordinates
-  int id;                   // Identifier for the polygon
-};
 
 // Function to compare two MBRs
 bool compare_mbr(const mbr &a, const mbr &b) {
@@ -214,32 +208,7 @@ void forward_scan(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
   std::vector<mbr> mlhs;
   std::vector<mbr> mrhs;
 
-  // Prepare MBRs for the left-hand side polygons
-  for (auto &it : lhs) {
-    int min_x = compress[{0, it.polygon_id}];
-    int max_x = compress[{2, it.polygon_id}];
-    int min_y = compress[{1, it.polygon_id}];
-    int max_y = compress[{3, it.polygon_id}];
-
-    mbr cur;
-    cur.minc = {min_x, min_y};
-    cur.maxc = {max_x, max_y};
-    cur.id = it.polygon_id;
-    mlhs.push_back(cur);
-  }
-
-  // Prepare MBRs for the right-hand side polygons
-  for (auto &it : rhs) {
-    int min_x = compress[{0, it.polygon_id}];
-    int max_x = compress[{2, it.polygon_id}];
-    int min_y = compress[{1, it.polygon_id}];
-    int max_y = compress[{3, it.polygon_id}];
-    mbr cur;
-    cur.minc = {min_x, min_y};
-    cur.maxc = {max_x, max_y};
-    cur.id = it.polygon_id;
-    mrhs.push_back(cur);
-  }
+  create_mbr_vectors(lhs, rhs, mlhs, mrhs, compress);
 
   std::pair<std::vector<int>, std::vector<int>> result_;
 

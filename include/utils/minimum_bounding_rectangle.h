@@ -1,6 +1,8 @@
 #ifndef MINIMUM_BOUNDING_RECTANGLE_H
 #define MINIMUM_BOUNDING_RECTANGLE_H
 
+#include "geometry_types.h"
+#include <map>
 #include <utility>
 
 // Structure representing a Minimum Bounding Rectangle (MBR)
@@ -15,4 +17,7 @@ struct mbr {
   bool check_intersection(const mbr &other) const;
 };
 
+void create_mbr_vectors(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
+                        std::vector<mbr> &mlhs, std::vector<mbr> &mrhs,
+                        std::map<std::pair<int, int>, int> &compress);
 #endif // MINIMUM_BOUNDING_RECTANGLE_H
