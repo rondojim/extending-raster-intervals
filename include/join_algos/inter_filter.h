@@ -126,11 +126,6 @@ private:
                     std::vector<const Point *> &right_vert_clipped_points,
                     bool debug);
 
-  // if the vertices form the square with bottom corners p1,p2
-  // returns true, else false 
-  bool is_certain_full_cell(const std::vector<const Point *> &vertices,
-                            const Point &p1, const Point &p2,
-                            bool debug = false);
 
   // clip the polygon with vertices elements (should be in cw order)
   // w.r.t. clipper line with points x1, y1, x2, y2
@@ -203,6 +198,12 @@ private:
   bool set_segment_borders_types(const Point &p1, const Point &p2, 
     std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo> &i_j_to_rcell_info);
 
+  // if the vertices form the square with bottom corners p1,p2
+  // returns true, else false 
+  bool is_certain_full_cell(const std::vector<const Point *> &vertices,
+                            const Point &p1, const Point &p2,
+                            bool debug = false);
+
   // return the R encoding of the vertices_vectors which is
   // in the cell with the bottom corners p1,p2
   // the clipped polygon wrt to the cell area 
@@ -274,6 +275,7 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
                         std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
                         std::set<int> &null_cell_code_poly_idxs,
+                        std::set<int> &error_poly_idxs,
                         std::string err_poly_f_name="", bool debug=false);
 
 int get_double_sigh(double x, double epsilon = 1e-24);
