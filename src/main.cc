@@ -76,6 +76,10 @@ void find_interesctions(
     return;
   }
 
+  printf("Ratio of wrong polygons: %f\n",
+         (double)null_cell_code_poly_idxs.size() /
+             (final_result.first.size() + final_result.second.size()));
+
   printf("Rasterization done\n");
 
   std::vector<SerializedPolygon> lhs_serialized_polygons;
@@ -123,7 +127,16 @@ void find_interesctions(
 
   // for each pair of polygon from final_result check if they intersect
   for (int i = 0; i < final_result.first.size(); i++) {
+    // check if id in null_cell_code_poly_idxs
+    if (null_cell_code_poly_idxs.find(final_result.first[i].polygon_id) !=
+        null_cell_code_poly_idxs.end()) {
+      continue;
+    }
     for (int j = 0; j < final_result.second.size(); j++) {
+      if (null_cell_code_poly_idxs.find(final_result.first[j].polygon_id) !=
+          null_cell_code_poly_idxs.end()) {
+        continue;
+      }
       Polygon lhs_p = lhs_polygons_copy[final_result.first[i].polygon_id - 1];
       Polygon rhs_p = rhs_polygons_copy[-final_result.second[j].polygon_id - 1];
 
