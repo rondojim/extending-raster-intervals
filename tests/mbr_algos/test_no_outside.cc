@@ -1,4 +1,4 @@
-#include "../../include/mbr_algos/mbr_forward_scan.h"
+#include "../../include/mbr_algos/mbr_no_outside.h"
 #include "../../include/utils/compressing.h"
 #include "../../include/utils/data_reader.h"
 #include "../../include/utils/geometry_types.h"
@@ -42,30 +42,41 @@ int main() {
   std::vector<mbr> mrhs;
 
   std::map<std::pair<int, int>, int> compress;
-  coordinate_compression(lhs, rhs, compress);
+  std::pair<int, int> coords = coordinate_compression(lhs, rhs, compress);
+  int MAXX = coords.first;
+  int MAXY = coords.second;
 
   std::pair<std::vector<Polygon>, std::vector<Polygon>> result;
-  forward_scan(lhs, rhs, result, 3);
+  std::set<int> resultset;
+  mbr_no_outside(lhs, rhs, compress, MAXX, MAXY, resultset);
 
-  create_mbr_vectors(result.first, result.second, mlhs, mrhs, compress);
+  for (auto &p : resultset) {
+    if (p > 0)
+      result.first.push_back(lhs[p - 1]);
+    else
+      result.second.push_back(rhs[-p - 1]);
+  }
 
-  // test for every mbr in mlhs if it intersects with at least one mbr in mrhs
-  for (auto &lhs_mbr : mlhs) {
+  create_mbr_vectors(lhs, rhs, mlhs, mrhs, compress);
+
+  // for every polygon in result.first, check if there exists an intersection in
+  // mrhs
+  for (auto &lhs_mbr : result.first) {
     bool intersects = false;
     for (auto &rhs_mbr : mrhs) {
-      if (lhs_mbr.check_intersection(rhs_mbr)) {
+      if (mlhs[lhs_mbr.polygon_id - 1].check_intersection(rhs_mbr)) {
         intersects = true;
         break;
       }
     }
     assert(intersects && "Intersection not found");
   }
-
-  // test for every mbr in mrhs if it intersects with at least one mbr in mlhs
-  for (auto &rhs_mbr : mrhs) {
+  // for every polygon in result.second, check if there exists an intersection
+  // in mlhs
+  for (auto &rhs_mbr : result.second) {
     bool intersects = false;
     for (auto &lhs_mbr : mlhs) {
-      if (rhs_mbr.check_intersection(lhs_mbr)) {
+      if (mrhs[-rhs_mbr.polygon_id - 1].check_intersection(lhs_mbr)) {
         intersects = true;
         break;
       }
@@ -73,7 +84,5 @@ int main() {
     assert(intersects && "Intersection not found");
   }
 
-  assert((result.first.size() + result.second.size()) == 48891 &&
-         "Incorrect number of polygons");
   return 0;
 }

@@ -32,10 +32,10 @@ target_link_libraries(hilbert_executable ${Boost_LIBRARIES})
 set(TEST_FILES
     tests/join_algos/test_ri_join_op.cc
     tests/mbr_algos/test_forward_scan.cc
-    # tests/join_algos/test_mbr_filter.cc
-    # tests/utils/test_data_reader.cc
-    # tests/utils/test_geometry_types.cc
-    # tests/utils/test_hilbert.cc
+    tests/mbr_algos/test_combined_sweep.cc
+    tests/mbr_algos/test_2d_segt.cc
+    tests/mbr_algos/test_no_inside.cc
+    tests/mbr_algos/test_no_outside.cc
 )
 
 # Add test executables

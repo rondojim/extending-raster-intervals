@@ -1,4 +1,4 @@
-#include "../../include/mbr_algos/mbr_forward_scan.h"
+#include "../../include/mbr_algos/mbr_2d_segt.h"
 #include "../../include/utils/compressing.h"
 #include "../../include/utils/data_reader.h"
 #include "../../include/utils/geometry_types.h"
@@ -45,7 +45,7 @@ int main() {
   coordinate_compression(lhs, rhs, compress);
 
   std::pair<std::vector<Polygon>, std::vector<Polygon>> result;
-  forward_scan(lhs, rhs, result, 3);
+  mbr_2D_segt(lhs, rhs, result);
 
   create_mbr_vectors(result.first, result.second, mlhs, mrhs, compress);
 

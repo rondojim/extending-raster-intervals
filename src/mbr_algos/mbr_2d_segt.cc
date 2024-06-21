@@ -172,12 +172,6 @@ filter_polygons(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
   // Initialize the root of the X segment tree
   NodeX *rootX = new NodeX();
 
-  printf("\nUpdating lhs into segment tree\n");
-
-  // Number of iterations for progress bar
-  int iters = lhs.size();
-  progressbar bar(iters);
-
   // Update the segment tree with the left-hand side (lhs) polygons
   for (auto &it : lhs) {
     int min_x = compress[{0, it.polygon_id}];
@@ -187,15 +181,7 @@ filter_polygons(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
 
     // Update the X segment tree with the MBR coordinates of the polygon
     updateX(rootX, 1, MAXX, min_x, max_x, min_y, max_y, MAXY);
-
-    bar.update();
   }
-
-  printf("\nQuerying segment tree for rhs\n");
-
-  // Number of iterations for progress bar
-  iters = rhs.size();
-  progressbar bar2(iters);
 
   // Query the segment tree with the right-hand side (rhs) polygons
   for (auto &it : rhs) {
@@ -209,18 +195,10 @@ filter_polygons(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
       // If intersection is found, add the polygon to the result set
       result.second.push_back(it);
     }
-
-    bar2.update();
   }
 
   // Initialize a new root for the X segment tree
   NodeX *rootX2 = new NodeX();
-
-  printf("\nUpdating rhs into new segment tree\n");
-
-  // Number of iterations for progress bar
-  iters = rhs.size();
-  progressbar bar3(iters);
 
   // Update the new segment tree with the right-hand side (rhs) polygons
   for (auto &it : rhs) {
@@ -231,15 +209,7 @@ filter_polygons(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
 
     // Update the X segment tree with the MBR coordinates of the polygon
     updateX(rootX2, 1, MAXX, min_x, max_x, min_y, max_y, MAXY);
-
-    bar3.update();
   }
-
-  printf("\nQuerying new segment tree for lhs\n");
-
-  // Number of iterations for progress bar
-  iters = lhs.size();
-  progressbar bar4(iters);
 
   // Query the new segment tree with the left-hand side (lhs) polygons
   for (auto &it : lhs) {
@@ -253,8 +223,6 @@ filter_polygons(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
       // If intersection is found, add the polygon to the result set
       result.first.push_back(it);
     }
-
-    bar4.update();
   }
 }
 
