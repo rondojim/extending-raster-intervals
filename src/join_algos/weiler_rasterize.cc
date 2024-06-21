@@ -441,7 +441,7 @@ int RasterGrid::walk_on_inter_vertices(
 }
 
 
-bool RasterGrid::weiler_rasterize_poly(
+int RasterGrid::weiler_rasterize_poly(
     Polygon &polygon,
     std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
         &i_j_to_rcell_info,
@@ -450,7 +450,7 @@ bool RasterGrid::weiler_rasterize_poly(
 
   if (!set_polygon_borders_cell_types(polygon.vertices, i_j_to_rcell_info)) {
     std::cerr << "Error in set_polygon_borders_cell_types\n";
-    return false;
+    return 0;
   }
 
   double xmin =
@@ -466,7 +466,7 @@ bool RasterGrid::weiler_rasterize_poly(
       std::isnan(ymax)) {
     std::cerr << "Error in weiler_rasterize_poly: min_above_or_equal_k or "
                  "max_below_or_equal_k returned NaN\n";
-    return false;
+    return 0;
   }
 
   int xmin_idx = sequence_idx(xmin, min_corner.x);
@@ -507,12 +507,12 @@ bool RasterGrid::weiler_rasterize_poly(
           semi_vert_clipped_vertices, p1_vert, p2_vert, debug);
       if (!success) {
         std::cout << "Failed in j " << j << "\n";
-        return false;
+        return 0;
       }
 
       if (!success) {
         std::cout << "Failed in j: " << j << "\n";
-        return false;
+        return 0;
       }
 
       cur_vert_clipped_vertices = semi_vert_clipped_vertices;
@@ -545,7 +545,7 @@ bool RasterGrid::weiler_rasterize_poly(
             for (std::vector<const Point *> &vec : semi_hori_clipped_vertices) {
               print_vec(vec);
             }
-            return false;
+            return 2;
           }
           i_j_to_rcell_info[i_j] =
               RasterCellInfo(semi_hori_clipped_vertices, cell_code);
@@ -559,7 +559,7 @@ bool RasterGrid::weiler_rasterize_poly(
         if (!success) {
           save_vertices_vectors("col_error.txt", j_to_vertices_vectors[j]);
           std::cout << "Failed in [" << i << ", " << j << "]\n";
-          return false;
+          return 0;
         }
 
         cur_hori_clipped_vertices = semi_hori_clipped_vertices;
@@ -576,7 +576,7 @@ bool RasterGrid::weiler_rasterize_poly(
                  fully_hori_clipped_vertices) {
               print_vec(vec);
             }
-            return false;
+            return 2;
           }
           i_j_to_rcell_info[i_j] =
               RasterCellInfo(fully_hori_clipped_vertices, cell_code);
@@ -585,5 +585,5 @@ bool RasterGrid::weiler_rasterize_poly(
     }
   }
 
-  return true;
+  return 1;
 }

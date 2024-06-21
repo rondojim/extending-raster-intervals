@@ -137,7 +137,7 @@ int test_rasterize_polygons(
     std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
         i_j_to_rcell_info;
 
-    if (!grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info)) {
+    if (grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info) == 1) {
         success = -1;
         error_polygons.push_back(polygon);
         std::cout << "Failed at idx " << i << " polygon with total vertices " << polygons[i].vertices.size() << std::endl;

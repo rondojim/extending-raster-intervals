@@ -8,6 +8,7 @@
 #include <iostream>
 #include <map>
 #include <numeric>
+#include <set>
 const double EPSILON = 1e-24;
  
 RasterGrid::RasterGrid(double n_, Point min_corner_, Point max_corner_)
@@ -414,6 +415,7 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::vector<Polygon> &rhs_polygons,
                         std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
                         std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
+                        std::set<int> &null_cell_code_poly_idxs,
                         std::string err_poly_f_name, bool debug) {
 
   progressbar bar(lhs_polygons.size() + rhs_polygons.size());
@@ -421,29 +423,43 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
   for (Polygon &polygon : lhs_polygons) {
     std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
         i_j_to_rcell_info;
-    if (!grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info, debug)) {
+    int success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info, debug);
+    if (!success){
       if (err_poly_f_name.size()) {
         polygon.save_poly(err_poly_f_name.c_str()); 
-        return false;
       }
+      return false;
     }
-    bar.update();   
-    lhs_i_j_to_rpoly_info.emplace_back(polygon.polygon_id, i_j_to_rcell_info);
+    else if (success == 2){
+      null_cell_code_poly_idxs.insert(polygon.polygon_id);
+    }
+    else {
+      lhs_i_j_to_rpoly_info.emplace_back(polygon.polygon_id, i_j_to_rcell_info);
+    }
+    bar.update();
   }
 
   printf("done with lhs\n");
   for (Polygon &polygon : rhs_polygons) {
     std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
         i_j_to_rcell_info;
-    if (!grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info, debug)) {
+
+    int success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info, debug);
+    if (!success){
       if (err_poly_f_name.size()) {
-        polygon.save_poly(err_poly_f_name.c_str());
+        polygon.save_poly(err_poly_f_name.c_str()); 
       }
       return false;
     }
-    rhs_i_j_to_rpoly_info.emplace_back(polygon.polygon_id, i_j_to_rcell_info);
+    else if (success == 2){
+      null_cell_code_poly_idxs.insert(polygon.polygon_id);
+    }
+    else {
+      rhs_i_j_to_rpoly_info.emplace_back(polygon.polygon_id, i_j_to_rcell_info);
+    }
     bar.update();
   }
+
   return true;
 }
 

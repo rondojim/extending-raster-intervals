@@ -67,8 +67,10 @@ void find_interesctions(
 
   std::vector<RasterPolygonInfo> lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info;
 
+  std::set<int> null_cell_code_poly_idxs;
   if (!rasterize_polygons(grid, final_result.first, final_result.second,
                           lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info,
+                          null_cell_code_poly_idxs,
                           "bin_error.txt", false)) {
     printf("Error in rasterization\n");
     return;

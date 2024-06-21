@@ -7,6 +7,7 @@
 #include <map>
 #include <stdexcept>
 #include <vector>
+#include <set>
 
 // expresses the direction of interesctio 
 // of a segment wrt another segment
@@ -230,7 +231,10 @@ public:
   // rasterixe the polygon and save result for each cell 
   // in map with key the cell pos i,j and value RasterCellInfo
   // using the weiler clipping algorithm
-  bool weiler_rasterize_poly(Polygon &polygon,
+  // return 2 in case of null cell code,
+  // 0 for any other error
+  // 1, on success
+  int weiler_rasterize_poly(Polygon &polygon,
                              std::map<std::pair<unsigned int, unsigned int>,
                                       RasterCellInfo> &i_j_to_rcell_info,
                              bool debug = false);
@@ -269,6 +273,7 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::vector<Polygon> &rhs_polygons,
                         std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
                         std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
+                        std::set<int> &null_cell_code_poly_idxs,
                         std::string err_poly_f_name="", bool debug=false);
 
 int get_double_sigh(double x, double epsilon = 1e-24);
