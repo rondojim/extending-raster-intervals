@@ -2,9 +2,11 @@
 #include "../include/join_algos/ri_join_algo.h"
 #include "../include/join_algos/serialize_polygon.h"
 #include "../include/mbr_algos/combined_sweep.h"
+#include "../include/utils/compressing.h"
 #include "../include/utils/data_reader.h"
 #include "../include/utils/geometry_types.h"
 #include "../include/utils/hilbert.h"
+#include "../include/utils/minimum_bounding_rectangle.h"
 #include <algorithm>
 #include <chrono>
 #include <set>
@@ -43,9 +45,9 @@ static void get_preprocessed_polygons(std::vector<Polygon> &lhs,
                    std::max(lhsMaxCorner.y, rhsMaxCorner.y)};
 }
 
-int find_interesctions(
+void find_interesctions(
     unsigned int N, std::string lhs_f_name, std::string rhs_f_name,
-    std::pair<std::vector<Polygon>, std::vector<Polygon>> intersections) {
+    std::pair<std::vector<Polygon>, std::vector<Polygon>> &intersections) {
   std::vector<Polygon> lhs_polygons;
   std::vector<Polygon> rhs_polygons;
   Point gridMinCorner, gridMaxCorner;
@@ -56,32 +58,12 @@ int find_interesctions(
   std::vector<Polygon> lhs_polygons_copy = lhs_polygons;
   std::vector<Polygon> rhs_polygons_copy = rhs_polygons;
 
-  // printf all polygon ids in lhs_polygons
-  for (auto &p : lhs_polygons) {
-    printf("Polygon id: %d\n", p.polygon_id);
-  }
-  // printf all polygon ids in rhs_polygons
-  for (auto &p : rhs_polygons) {
-    printf("Polygon id: %d\n", p.polygon_id);
-  }
-
   RasterGrid grid = RasterGrid(N, gridMinCorner, gridMaxCorner);
-  std::cout << grid.min_corner.to_str() << std::endl;
-  std::cout << grid.max_corner.to_str() << std::endl;
+
   // run mbr combined sweep ------------------------------------------------
   std::pair<std::vector<Polygon>, std::vector<Polygon>> final_result;
-  printf("%s %s %d\n", lhs_polygons[0].minCorner.to_str().c_str(),
-         lhs_polygons[0].maxCorner.to_str().c_str(),
-         lhs_polygons[0].polygon_id);
-  printf("%s %s %d\n", rhs_polygons[0].minCorner.to_str().c_str(),
-         rhs_polygons[0].maxCorner.to_str().c_str(),
-         rhs_polygons[0].polygon_id);
   mbr_combined_sweep(lhs_polygons, rhs_polygons, final_result);
   printf("%d %d\n", final_result.first.size(), final_result.second.size());
-
-  printf("Combined sweep done\n");
-  // // run interval filter ----------------------------------------------------
-  // RasterGrid grid = RasterGrid(N, gridMinCorner, gridMaxCorner);
 
   std::vector<RasterPolygonInfo> lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info;
 
@@ -89,7 +71,7 @@ int find_interesctions(
                           lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info,
                           "bin_error.txt", false)) {
     printf("Error in rasterization\n");
-    return -1;
+    return;
   }
 
   printf("Rasterization done\n");
@@ -119,60 +101,50 @@ int find_interesctions(
   ri_join_algo(lhs_serialized_polygons, rhs_serialized_polygons, result,
                indecisive);
 
-  // print result
-  printf("Result\n");
-  for (auto &r : result) {
-    printf("lhs polygon id: %d, rhs polygon id: %d\n", r.first, r.second);
-  }
-  // print indecisive
-  printf("Indecisive\n");
-  for (auto &r : indecisive) {
-    printf("lhs polygon id: %d, rhs polygon id: %d\n", r.first, r.second);
-  }
-
+  printf("Ended RI join\n");
   // check indecisive
   for (auto &r : indecisive) {
     Polygon lhs_p = lhs_polygons_copy[r.first - 1];
     Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
 
     if (lhs_p.intersects(rhs_p)) {
-      printf("Pair (%d, %d) intersects \n", r.first, r.second);
       result.push_back(r);
     }
   }
+  printf("Found indecisive\n");
 
-  // print lhs serialized polygons
-  // for (auto &sp : lhs_serialized_polygons) {
-  //   printf("Polygon id: %d\n", sp.polygon_id);
-  //   for (auto &ib : sp.bitmasks) {
-  //     printf("Interval: %d %d\n", ib.start, ib.end);
-  //     printf("Bitmask: ");
-  //     std::cout << "Bitmask: " << ib.bitmask << std::endl;
-  //   }
-  // }
-  // print rhs serialized polygons
-  // for (auto &sp : rhs_serialized_polygons) {
-  //   printf("Polygon id: %d\n", sp.polygon_id);
-  //   for (auto &ib : sp.bitmasks) {
-  //     printf("Interval: %d %d\n", ib.start, ib.end);
-  //     printf("Bitmask: ");
-  //     std::cout << "Bitmask: " << ib.bitmask << std::endl;
-  //   }
-  // }
+  // create a set with the pairs that intersect
+  std::set<std::pair<int, int>> result_set;
+  for (auto &r : result) {
+    result_set.insert(r);
+  }
 
-  return 0;
+  // for each pair of polygon from final_result check if they intersect
+  for (int i = 0; i < final_result.first.size(); i++) {
+    for (int j = 0; j < final_result.second.size(); j++) {
+      Polygon lhs_p = lhs_polygons_copy[final_result.first[i].polygon_id - 1];
+      Polygon rhs_p = rhs_polygons_copy[-final_result.second[j].polygon_id - 1];
+
+      if (lhs_p.intersects(rhs_p)) {
+        std::pair<int, int> p = {final_result.first[i].polygon_id,
+                                 final_result.second[j].polygon_id};
+        if (result_set.find(p) == result_set.end()) {
+          printf("ERRORRR\n");
+        }
+      }
+    }
+  }
 }
 
 int main() {
-  unsigned int N = 2;
-  // std::string rhs_f_name("../../dataset_files/OSM_by_continent/O5OC");
-  // std::string lhs_f_name("../../dataset_files/OSM_by_continent/O6OC");
-  std::string lhs_f_name("../datasets/O5AF.txt");
-  std::string rhs_f_name("../datasets/O6AF.txt");
+  unsigned int N = 12;
+  std::string rhs_f_name("../../dataset_files/OSM_by_continent/O5OC");
+  std::string lhs_f_name("../../dataset_files/OSM_by_continent/O6OC");
+  // std::string lhs_f_name("../datasets/O5AF.txt");
+  // std::string rhs_f_name("../datasets/O6AF.txt");
   std::pair<std::vector<Polygon>, std::vector<Polygon>> intersections;
 
-  int result = find_interesctions(N, lhs_f_name, rhs_f_name, intersections);
-  // get polygons -----------------------------------------------------------
+  find_interesctions(N, lhs_f_name, rhs_f_name, intersections);
 
   return 0;
 }
