@@ -15,7 +15,7 @@
 // processing
 // @return: Boolean indicating if the polygons intersect
 bool ri_join_pair(SerializedPolygon &lhs, SerializedPolygon &rhs, int lhs_idx,
-                  int rhs_idx, std::vector<std::pair<int, int>> &indecisive);
+                  int rhs_idx, std::set<std::pair<int, int>> &indecisive);
 
 // Function to perform a Raster Interval (RI) join on collections of serialized
 // polygons
@@ -28,7 +28,7 @@ bool ri_join_pair(SerializedPolygon &lhs, SerializedPolygon &rhs, int lhs_idx,
 // processing
 void ri_join_algo(std::vector<SerializedPolygon> &lhs_serialized_polygons,
                   std::vector<SerializedPolygon> &rhs_serialized_polygons,
-                  std::vector<std::pair<int, int>> &result,
-                  std::vector<std::pair<int, int>> &indecisive);
+                  std::set<std::pair<int, int>> &result,
+                  std::set<std::pair<int, int>> &indecisive);
 
 #endif // RI_JOIN_ALGO_H

@@ -507,8 +507,8 @@ int join_cell_types(BinaryCellCode l_cell_type, BinaryCellCode r_cell_type) {
 
 void join_poly_cell_types(std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
                         std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
-                        std::vector<std::pair<int, int>> &result,
-                        std::vector<std::pair<int, int>> &indecisive) {
+                        std::set<std::pair<int, int>> &result,
+                        std::set<std::pair<int, int>> &indecisive) {
 
     for (RasterPolygonInfo& l_rpoly_info: lhs_i_j_to_rpoly_info) {
         int l_idx = l_rpoly_info.idx;
@@ -539,10 +539,10 @@ void join_poly_cell_types(std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
             }
 
             if (inter == 1) {
-                result.push_back(l_r_idx);
+                result.insert(l_r_idx);
             }
             else if (inter == 2) {
-                indecisive.push_back(l_r_idx);
+                indecisive.insert(l_r_idx);
             }
 
         }

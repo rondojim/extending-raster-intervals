@@ -1,6 +1,3 @@
-#include "../../include/join_algos/inter_filter.h"
-#include "../../include/utils/data_reader.h"
-#include "../../include/utils/geometry_types.h"
 #include <algorithm>
 #include <bitset>
 #include <chrono>
@@ -10,6 +7,16 @@
 #include <iostream>
 #include <map>
 #include <thread>
+#include "../../include/join_algos/inter_filter.h"
+#include "../../include/join_algos/ri_join_algo.h"
+#include "../../include/join_algos/serialize_polygon.h"
+#include "../../include/mbr_algos/combined_sweep.h"
+#include "../../include/utils/compressing.h"
+#include "../../include/utils/data_reader.h"
+#include "../../include/utils/geometry_types.h"
+#include "../../include/utils/hilbert.h"
+#include "../../include/utils/minimum_bounding_rectangle.h"
+#include "../../include/utils/pipeline.h"
 
 void display_loading_bar(double progress) {
   int barWidth = 70;
@@ -26,6 +33,7 @@ void display_loading_bar(double progress) {
   std::cout << "] " << int(progress * 100.0) << " %\r";
   std::cout.flush();
 }
+
 
 bool test_polygon_area(double orig_poly_area,
                       std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
@@ -91,103 +99,91 @@ void print_test_error_info(Polygon polygon, RasterGrid grid)
             << grid.step << "\n";
 }
 
-static void get_preprocessed_polygons(std::vector<Polygon> &polygons,
-                                      const std::string &f_name,
-                                      Point &gridMinCorner,
-                                      Point &gridMaxCorner, int n = -1) {
-  Point MinCorner, MaxCorner;
-  polygons = read_data_find_MBR(f_name, MinCorner, MaxCorner, n);
-  printf("Read set\n");
-
-  gridMinCorner = Point(MinCorner.x, MinCorner.y);
-  gridMaxCorner = Point(MaxCorner.x, MaxCorner.y);
-
-}
 
 int test_join(
-    unsigned int N, std::string f_name, std::string f_name, std::vector<RasterPolygonInfo>& i_j_to_rpoly_info, std::string info_file_name = "", std::string err_poly_f_name="") {
+    unsigned int N, std::string rhs_f_name, std::string lhs_f_name, std::string info_file_name = "", std::string err_poly_f_name="") {
 
-  std::vector<Polygon> polygons;
-  Point gridMinCorner, gridMaxCorner;
-  get_preprocessed_polygons(polygons, f_name, gridMinCorner, gridMaxCorner, -1);
+    std::vector<Polygon> lhs_polygons;
+    std::vector<Polygon> rhs_polygons;
+    Point gridMinCorner, gridMaxCorner;
+    get_preprocessed_polygons(lhs_polygons, rhs_polygons, lhs_f_name, rhs_f_name,
+                                gridMinCorner, gridMaxCorner);
 
-  polygons[0].save_poly("test_poly.txt");
+    //   lhs_polygons[0].save_poly("lhs.txt");
+    //   rhs_polygons[0].save_poly("rhs.txt");
 
-  size_t total_tests = polygons.size();
-  std::cout << "Total tests: " << total_tests << std::endl;
+    std::cout << "First dataset sz: : " << lhs_polygons.size() << std::endl;
+    std::cout << "Second dataset sz: : " << rhs_polygons.size() << std::endl;
 
-  // calculate area of each polygon to test after rasetrization 
-  // if the sum of the clipped polygon area is equal 
-  std::vector<double> polygons_area;
-  for (int i = 0; i < polygons.size(); i++) {
-      polygons_area.push_back(polygon_area(polygons[i].vertices));
-  }
+    // calculate area of each polygon to test after rasetrization 
+    // // if the sum of the clipped polygon area is equal 
+    // std::vector<double> lhs_polygons_area;
+    // for (int i = 0; i < lhs_polygons.size(); i++) {
+    //     lhs_polygons_area.push_back(polygon_area(lhs_polygons[i].vertices));
+    // }
+    // std::vector<double> rhs_polygons_area;
+    // for (int i = 0; i < rhs_polygons.size(); i++) {
+    //     rhs_polygons_area.push_back(polygon_area(rhs_polygons[i].vertices));
+    // }
 
-  // Construct Grid
-  RasterGrid grid = RasterGrid(N, gridMinCorner, gridMaxCorner);
-  std::cout << "Grid mbr: " << grid.max_corner.to_str() << grid.min_corner.to_str() << std::endl;
+    // Construct Grid
+    RasterGrid grid = RasterGrid(N, gridMinCorner, gridMaxCorner);
+    std::cout << "Grid mbr: " << grid.max_corner.to_str() << grid.min_corner.to_str() << std::endl;
 
-  auto start_time = std::chrono::steady_clock::now();
-  size_t passed_tests = 0;
-  int success = 0;
-  std::vector<Polygon> error_polygons;
-  for (int i = 0; i < total_tests; ++i) 
-  {
-
-    Polygon polygon = polygons[i];
-
-    std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
-        i_j_to_rcell_info;
-
-    int weiler_success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info);
-    std::cout << "weiler_success: " <<weiler_success<< std::endl;
-    if (weiler_success != 1) {
-        success = -1;
-        error_polygons.push_back(polygon);
-        std::cout << "Failed at idx " << i << " polygon with total vertices " << polygons[i].vertices.size() << std::endl;
-        std::cerr << "Error in polygon rasterization\n";
-        break;
+    std::set<int> null_cell_code_poly_idxs, error_poly_idxs;
+    std::pair<std::vector<Polygon>, std::vector<Polygon>> final_result;
+    std::vector<RasterPolygonInfo> lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info;
+    if (rasterize_polygons(grid, final_result.first, final_result.second,
+                            lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info,
+                            null_cell_code_poly_idxs, error_poly_idxs,
+                            "bin_error.txt", false)) {
+        printf("Error in rasterization\n");
     }
-    else {
 
-        if (info_file_name.size()) {
-          save_clipped_vertices_cell_type(info_file_name.c_str(), i_j_to_rcell_info);
-        }
+     printf("Ratio of wrong polygons: %f\n",
+         (double)(null_cell_code_poly_idxs.size() + error_poly_idxs.size()) /
+             (final_result.first.size() + final_result.second.size()));
 
-        int result = test_polygon_area(polygons_area[i], i_j_to_rcell_info); 
-        if (result == 1)
-        {
-            passed_tests++;
-        }
-        else
-        {
-            std::cout << "Failed at idx " << i << " polygon with total vertices " << polygons[i].vertices.size() << std::endl;
-            //print_test_error_info(polygons[i], grid);
-            std::cout << " Different original polygon and clipped polygon areas\n";
-            success = 1;
-            error_polygons.push_back(polygon);
-            break;
-        }
+    printf("Rasterization done\n");
 
-        i_j_to_rpoly_info.emplace_back(polygon.polygon_id, i_j_to_rcell_info);
+    std::vector<SerializedPolygon> lhs_serialized_polygons;
+    std::vector<SerializedPolygon> rhs_serialized_polygons;
 
-    }
-    display_loading_bar(static_cast<double>(i + 1) / total_tests);
-  }
+    // load hilbert map
+    std::map<std::pair<int, int>, int> hilbert_map;
 
-  auto end_time = std::chrono::steady_clock::now();
-  std::chrono::duration<double> elapsed = end_time - start_time;
-  std::cout << std::endl;
-  std::cout << "Passed " << passed_tests << " out of " << total_tests
-            << " tests." << std::endl;
-  std::cout << "Execution time for n = " << N << " was " << elapsed.count()
-            << " seconds." << std::endl;
+    std::string base_path =
+        "/Users/dimronto/Desktop/DSIT/Spring/Database "
+        "Systems/project/phase1-paper-presentation-roadmap-2024-raster-intervals/"
+        "hilbert_maps/hilbert_";
+    std::string hilbert_map_f_name = base_path + std::to_string(N) + ".txt";
 
-  if (success != 0 && err_poly_f_name.size()) {
-      std::cout << "Saving " << error_polygons.size() << " error polygons in file " << err_poly_f_name << std::endl;
-      save_polygons_to_csv(error_polygons, err_poly_f_name.c_str());
-  }
-  return success;
+    loadMapFromFile(hilbert_map, hilbert_map_f_name);
+    printf("Hilbert map loaded\n");
+    serialize_polygons(lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info, hilbert_map,
+                        lhs_serialized_polygons, rhs_serialized_polygons);
+    printf("Serialization done\n");
+
+    std::set<std::pair<int, int>> result;
+    std::set<std::pair<int, int>> indecisive;
+
+    printf("Starting RI join\n");
+    ri_join_algo(lhs_serialized_polygons, rhs_serialized_polygons, result,
+                indecisive);
+
+    printf("Indecisive ratio: %f\n",
+            (double)indecisive.size() /
+                (final_result.first.size() * final_result.second.size()));
+
+    printf("Ended RI join\n");
+
+
+    std::set<std::pair<int, int>> join_ctype_result;
+    std::set<std::pair<int, int>> join_ctype_indecisive;
+    join_poly_cell_types(lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info, join_ctype_result, join_ctype_indecisive);
+
+
+        
 }
 
 int main() {

@@ -25,7 +25,7 @@ static void truncate_bitset(boost::dynamic_bitset<> &bitmask, int start,
 
 // Function to join two serialized polygons and check for overlaps
 bool ri_join_pair(SerializedPolygon &lhs, SerializedPolygon &rhs, int lhs_idx,
-                  int rhs_idx, std::vector<std::pair<int, int>> &indecisive) {
+                  int rhs_idx, std::set<std::pair<int, int>> &indecisive) {
   bool overlap = false; // Flag to indicate if there is any overlap
   int i = 0, j = 0;     // Indices for iterating over bitmasks
 
@@ -67,7 +67,7 @@ bool ri_join_pair(SerializedPolygon &lhs, SerializedPolygon &rhs, int lhs_idx,
   // If there was any overlap, but did not return true, add the pair to the
   // indecisive list
   if (overlap) {
-    indecisive.push_back({lhs_idx, rhs_idx});
+    indecisive.insert({lhs_idx, rhs_idx});
   }
 
   return false;
@@ -77,8 +77,8 @@ bool ri_join_pair(SerializedPolygon &lhs, SerializedPolygon &rhs, int lhs_idx,
 // results
 void ri_join_algo(std::vector<SerializedPolygon> &lhs_serialized_polygons,
                   std::vector<SerializedPolygon> &rhs_serialized_polygons,
-                  std::vector<std::pair<int, int>> &result,
-                  std::vector<std::pair<int, int>> &indecisive) {
+                  std::set<std::pair<int, int>> &result,
+                  std::set<std::pair<int, int>> &indecisive) {
 
   // Iterate through all pairs of polygons from both collections
   for (auto &lhs_polygon : lhs_serialized_polygons) {
@@ -87,7 +87,7 @@ void ri_join_algo(std::vector<SerializedPolygon> &lhs_serialized_polygons,
       if (ri_join_pair(lhs_polygon, rhs_polygon, lhs_polygon.polygon_id,
                        rhs_polygon.polygon_id, indecisive)) {
         // If they overlap, add the pair to the result vector
-        result.push_back({lhs_polygon.polygon_id, rhs_polygon.polygon_id});
+        result.insert({lhs_polygon.polygon_id, rhs_polygon.polygon_id});
       }
     }
   }

@@ -325,8 +325,8 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
 
 void join_poly_cell_types(std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
                         std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
-                        std::vector<std::pair<int, int>> &result,
-                        std::vector<std::pair<int, int>> &indecisive);
+                        std::set<std::pair<int, int>> &result,
+                        std::set<std::pair<int, int>> &indecisive);
 
 int get_double_sigh(double x, double epsilon = 1e-24);
 bool are_equal(double a, double b, double epsilon = 1e-20);
