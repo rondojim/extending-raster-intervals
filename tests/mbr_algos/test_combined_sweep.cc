@@ -25,8 +25,8 @@ int main() {
   std::vector<Polygon> lhs;
   std::vector<Polygon> rhs;
 
-  std::string filename_lhs("../../dataset_files/OSM_by_continent/O5OC");
-  std::string filename_rhs("../../dataset_files/OSM_by_continent/O6OC");
+  std::string filename_lhs("../../dataset_files/OSM_filtered_datasets/O5OC");
+  std::string filename_rhs("../../dataset_files/OSM_filtered_datasets/O6OC");
 
   Point lhsMinCorner, lhsMaxCorner, rhsMinCorner, rhsMaxCorner;
 
@@ -73,7 +73,7 @@ int main() {
     assert(intersects && "Intersection not found");
   }
 
-  assert((result.first.size() + result.second.size()) == 48891 &&
+  assert((result.first.size() + result.second.size()) == 40651 &&
          "Incorrect number of polygons");
   return 0;
 }
