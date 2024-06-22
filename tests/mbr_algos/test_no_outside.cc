@@ -25,8 +25,8 @@ int main() {
   std::vector<Polygon> lhs;
   std::vector<Polygon> rhs;
 
-  std::string filename_lhs("../../dataset_files/OSM_by_continent/O5OC");
-  std::string filename_rhs("../../dataset_files/OSM_by_continent/O6OC");
+  std::string filename_lhs("../../dataset_files/OSM_filtered_datasets/O5OC");
+  std::string filename_rhs("../../dataset_files/OSM_filtered_datasets/O6OC");
 
   Point lhsMinCorner, lhsMaxCorner, rhsMinCorner, rhsMaxCorner;
 
