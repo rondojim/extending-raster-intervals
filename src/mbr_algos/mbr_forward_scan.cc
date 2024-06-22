@@ -24,7 +24,7 @@ bool compare_mbr(const mbr &a, const mbr &b) {
 
 // Function to filter partitions and find intersections
 static void filter_partition(std::vector<mbr> &mlhs, std::vector<mbr> &mrhs,
-                             std::set<int> &lhs_ids, std::set<int> &rhs_ids) {
+                             std::vector<std::pair<int, int>> &result_) {
   int lh = 0;
   int rh = 0;
 
@@ -41,8 +41,7 @@ static void filter_partition(std::vector<mbr> &mlhs, std::vector<mbr> &mrhs,
         int ry1 = mrhs[rh_].minc.second;
         int ry2 = mrhs[rh_].maxc.second;
         if (!(ly2 < ry1 || ly1 > ry2)) {
-          lhs_ids.insert(mlhs[lh].id);
-          rhs_ids.insert(mrhs[rh_].id);
+          result_.push_back({mlhs[lh].id, mrhs[rh_].id});
         }
         rh_++;
       }
@@ -57,8 +56,7 @@ static void filter_partition(std::vector<mbr> &mlhs, std::vector<mbr> &mrhs,
         int ly1 = mlhs[lh_].minc.second;
         int ly2 = mlhs[lh_].maxc.second;
         if (!(ry2 < ly1 || ry1 > ly2)) {
-          lhs_ids.insert(mlhs[lh_].id);
-          rhs_ids.insert(mrhs[rh].id);
+          result_.push_back({mlhs[lh_].id, mrhs[rh].id});
         }
         lh_++;
       }
@@ -68,10 +66,10 @@ static void filter_partition(std::vector<mbr> &mlhs, std::vector<mbr> &mrhs,
 }
 
 // Function to filter polygons using partitioning
-static void
-filter_polygons(std::vector<mbr> &mlhs, std::vector<mbr> &mrhs, int MAXX,
-                int MAXY, std::pair<std::vector<int>, std::vector<int>> &result,
-                int partitions = 3) {
+static void filter_polygons(std::vector<mbr> &mlhs, std::vector<mbr> &mrhs,
+                            int MAXX, int MAXY,
+                            std::vector<std::pair<int, int>> &result,
+                            int partitions = 3) {
   // Initialize partitions
   std::vector<int> Xpartitions;
   std::vector<int> Ypartitions;
@@ -150,11 +148,8 @@ filter_polygons(std::vector<mbr> &mlhs, std::vector<mbr> &mrhs, int MAXX,
   }
 
   // Sets to store IDs of intersecting polygons
-  std::set<int> lhs_ids_;
-  std::set<int> rhs_ids_;
 
-  std::set<int> lhs_ids[10][10];
-  std::set<int> rhs_ids[10][10];
+  std::vector<std::pair<int, int>> result_[10][10];
 
   std::vector<std::future<void>> futures;
 
@@ -162,8 +157,7 @@ filter_polygons(std::vector<mbr> &mlhs, std::vector<mbr> &mrhs, int MAXX,
   for (int i = 0; i < partitions; ++i) {
     for (int j = 0; j < partitions; ++j) {
       futures.emplace_back(std::async(std::launch::async, [&, i, j]() {
-        filter_partition(lhs_parts[i][j], rhs_parts[i][j], lhs_ids[i][j],
-                         rhs_ids[i][j]);
+        filter_partition(lhs_parts[i][j], rhs_parts[i][j], result_[i][j]);
       }));
     }
   }
@@ -174,30 +168,30 @@ filter_polygons(std::vector<mbr> &mlhs, std::vector<mbr> &mrhs, int MAXX,
   }
 
   // Filter partitions for the entire set
-  filter_partition(mlhs, mrhs, lhs_ids_, rhs_ids_);
+  // filter_partition(mlhs, mrhs, lhs_ids_, rhs_ids_);
+
+  std::set<int> lhs_ids;
+  std::set<int> rhs_ids;
 
   // Combine results from all partitions
   for (int i = 0; i < partitions; ++i) {
     for (int j = 0; j < partitions; ++j) {
-      lhs_ids_.insert(lhs_ids[i][j].begin(), lhs_ids[i][j].end());
-      rhs_ids_.insert(rhs_ids[i][j].begin(), rhs_ids[i][j].end());
+      // push back in result the result_[i][j] vector
+      for (auto &pair : result_[i][j]) {
+        lhs_ids.insert(pair.first);
+        rhs_ids.insert(pair.second);
+        result.push_back(pair);
+      }
     }
   }
-
+  printf("Filtered: %d\n", lhs_ids.size() + rhs_ids.size());
   // Store results in the result pair
-  for (auto &it : lhs_ids_) {
-    result.first.push_back(it);
-  }
-  for (auto &it : rhs_ids_) {
-    result.second.push_back(it);
-  }
 }
 
 // Function to perform a forward scan for MBR intersection using a brute force
 // approach
 void forward_scan(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
-                  std::pair<std::vector<Polygon>, std::vector<Polygon>> &result,
-                  int partitions) {
+                  std::vector<std::pair<int, int>> &result, int partitions) {
 
   std::map<std::pair<int, int>, int> compress; // Map for coordinate compression
 
@@ -210,20 +204,12 @@ void forward_scan(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
 
   create_mbr_vectors(lhs, rhs, mlhs, mrhs, compress);
 
-  std::pair<std::vector<int>, std::vector<int>> result_;
-
   // Sort MBRs
   std::sort(mlhs.begin(), mlhs.end(), compare_mbr);
   std::sort(mrhs.begin(), mrhs.end(), compare_mbr);
 
   // Filter polygons using partitioning
-  filter_polygons(mlhs, mrhs, MAXX, MAXY, result_, partitions);
+  filter_polygons(mlhs, mrhs, MAXX, MAXY, result, partitions);
 
-  // Store the resulting polygons in the result pair
-  for (auto &it : result_.first) {
-    result.first.push_back(lhs[it - 1]);
-  }
-  for (auto &it : result_.second) {
-    result.second.push_back(rhs[-it - 1]);
-  }
+  // Store the resulting polygons in the result pai
 }

@@ -209,8 +209,8 @@ int test_join(unsigned int N, std::string rhs_f_name, std::string lhs_f_name,
 
 int main() {
   unsigned int N = 2;
-  std::string rhs_f_name("../../dataset_files/OSM_filtered_datasets/O5OC");
-  std::string lhs_f_name("../../dataset_files/OSM_filtered_datasets/O6OC");
+  std::string rhs_f_name("../../dataset_files/archive/T1.csv");
+  std::string lhs_f_name("../../dataset_files/archive/T2.csv");
 
   std::vector<RasterPolygonInfo> i_j_to_rpoly_info;
   int success = test_join(N, lhs_f_name, rhs_f_name, "", "error_polygons.csv");

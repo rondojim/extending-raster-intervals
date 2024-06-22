@@ -13,7 +13,6 @@
 // @param result: Pair of vectors to store the intersecting polygons from lhs
 // and rhs
 void forward_scan(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
-                  std::pair<std::vector<Polygon>, std::vector<Polygon>> &result,
-                  int partitions = 1);
+                  std::vector<std::pair<int, int>> &result, int partitions = 1);
 
 #endif // MBR_SWEEP_BRUTE_H

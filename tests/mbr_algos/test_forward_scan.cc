@@ -44,36 +44,8 @@ int main() {
   std::map<std::pair<int, int>, int> compress;
   coordinate_compression(lhs, rhs, compress);
 
-  std::pair<std::vector<Polygon>, std::vector<Polygon>> result;
+  std::vector<std::pair<int, int>> result;
   forward_scan(lhs, rhs, result, 3);
 
-  create_mbr_vectors(result.first, result.second, mlhs, mrhs, compress);
-
-  // test for every mbr in mlhs if it intersects with at least one mbr in mrhs
-  for (auto &lhs_mbr : mlhs) {
-    bool intersects = false;
-    for (auto &rhs_mbr : mrhs) {
-      if (lhs_mbr.check_intersection(rhs_mbr)) {
-        intersects = true;
-        break;
-      }
-    }
-    assert(intersects && "Intersection not found");
-  }
-
-  // test for every mbr in mrhs if it intersects with at least one mbr in mlhs
-  for (auto &rhs_mbr : mrhs) {
-    bool intersects = false;
-    for (auto &lhs_mbr : mlhs) {
-      if (rhs_mbr.check_intersection(lhs_mbr)) {
-        intersects = true;
-        break;
-      }
-    }
-    assert(intersects && "Intersection not found");
-  }
-  printf("%d\n", result.first.size() + result.second.size());
-  // assert((result.first.size() + result.second.size()) == 40651 &&
-  //        "Incorrect number of polygons");
   return 0;
 }

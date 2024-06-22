@@ -69,52 +69,53 @@ void Polygon::print_() {
 }
 
 std::string Polygon::to_wkt() {
-    std::ostringstream oss;
-    // Set fixed format and precision for output
-    oss << std::fixed << std::setprecision(7);
-    oss << "\"POLYGON ((";
-    for (size_t i = 0; i < vertices.size(); ++i) {
-        if (i != 0) {
-            oss << ", ";
-        }
-        oss << vertices[i]->x << " " << vertices[i]->y;
+  std::ostringstream oss;
+  // Set fixed format and precision for output
+  oss << std::fixed << std::setprecision(7);
+  oss << "\"POLYGON ((";
+  for (size_t i = 0; i < vertices.size(); ++i) {
+    if (i != 0) {
+      oss << ", ";
     }
-    oss << "))\"";
-    return oss.str();
+    oss << vertices[i]->x << " " << vertices[i]->y;
+  }
+  oss << "))\"";
+  return oss.str();
 }
 
-void Polygon::save_vertices_to_csv(const char* output_file) {
-    std::ofstream file(output_file);
-    if (!file.is_open()) {
-        std::cerr << "Error opening file: " << output_file << std::endl;
-        return;
-    }
+void Polygon::save_vertices_to_csv(const char *output_file) {
+  std::ofstream file(output_file);
+  if (!file.is_open()) {
+    std::cerr << "Error opening file: " << output_file << std::endl;
+    return;
+  }
 
-    // Set fixed format and precision for output
-    file << std::fixed << std::setprecision(7);
+  // Set fixed format and precision for output
+  file << std::fixed << std::setprecision(7);
 
-    // Write vertices to CSV
-    for (const auto& vertex : vertices) {
-        file << vertex->x << ", " << vertex->y << "\n";
-    }
+  // Write vertices to CSV
+  for (const auto &vertex : vertices) {
+    file << vertex->x << ", " << vertex->y << "\n";
+  }
 
-    file.close();
-    std::cout << "Vertices saved to " << output_file << std::endl;
+  file.close();
+  std::cout << "Vertices saved to " << output_file << std::endl;
 }
 
-void save_polygons_to_csv(std::vector<Polygon>& polygons, const char* output_file) {
-    std::ofstream file(output_file);
-    if (!file.is_open()) {
-        std::cerr << "Error opening file: " << output_file << std::endl;
-        return;
-    }
+void save_polygons_to_csv(std::vector<Polygon> &polygons,
+                          const char *output_file) {
+  std::ofstream file(output_file);
+  if (!file.is_open()) {
+    std::cerr << "Error opening file: " << output_file << std::endl;
+    return;
+  }
 
-    // Set fixed format and precision for output
-    file << std::fixed << std::setprecision(7);
+  // Set fixed format and precision for output
+  file << std::fixed << std::setprecision(7);
 
-    for (auto& polygon : polygons) {
-        file << polygon.to_wkt() << "\n";
-    }
+  for (auto &polygon : polygons) {
+    file << polygon.to_wkt() << "\n";
+  }
 
   file.close();
   std::cout << "Polygons saved to " << output_file << std::endl;
@@ -192,7 +193,8 @@ double polygon_area(const std::vector<const Point *> &points) {
 
 int orientation(const Point &p, const Point &q, const Point &r) {
   double val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
-  if (val == 0)
+  const double eps = 1e-9; // Small epsilon for floating-point comparison
+  if (std::abs(val) < eps)
     return 0;               // collinear
   return (val > 0) ? 1 : 2; // clock or counterclockwise
 }
@@ -228,25 +230,48 @@ bool doIntersect(const Point &p1, const Point &q1, const Point &p2,
 
 bool Polygon::point_inside(const Point &p) const {
   int n = vertices.size();
+  int x = p.x;
+  int y = p.y;
+
   if (n < 3)
     return false;
 
-  Point extreme = {1e9, p.y};
+  bool inside = false;
 
-  int count = 0, i = 0;
-  do {
-    int next = (i + 1) % n;
+  Point p1 = *vertices[0];
 
-    if (doIntersect(*vertices[i], *vertices[next], p, extreme)) {
-      if (orientation(*vertices[i], p, *vertices[next]) == 0)
-        return onSegment(*vertices[i], p, *vertices[next]);
+  for (int i = 1; i <= n; ++i) {
+    Point p2 = *vertices[i % n];
 
-      count++;
+    if (y > std::min(p1.y, p2.y) && y <= std::max(p1.y, p2.y) &&
+        x <= std::max(p1.x, p2.x)) {
+      double x_intersection = (y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
+      if (p1.x == p2.x || x <= x_intersection) {
+        // Flip the inside flag
+        inside = !inside;
+      }
     }
-    i = next;
-  } while (i != 0);
 
-  return count & 1;
+    p1 = p2;
+  }
+  return inside;
+}
+
+bool Polygon::is_ccw() const {
+  double area = 0;
+  int n = vertices.size();
+  for (int i = 0; i < n; ++i) {
+    const Point &p1 = *vertices[i];
+    const Point &p2 = *vertices[(i + 1) % n];
+    area += (p2.x - p1.x) * (p2.y + p1.y);
+  }
+  return area > 0;
+}
+
+void Polygon::make_cw() {
+  if (is_ccw()) {
+    std::reverse(vertices.begin(), vertices.end());
+  }
 }
 
 bool Polygon::intersects(const Polygon &poly2) const {
@@ -256,6 +281,12 @@ bool Polygon::intersects(const Polygon &poly2) const {
       size_t next_j = (j + 1) % poly2.vertices.size();
       if (doIntersect(*vertices[i], *vertices[next_i], *poly2.vertices[j],
                       *poly2.vertices[next_j])) {
+        // printf("Intersecting segments: (%lf, %lf) (%lf, %lf) and (%lf, %lf) "
+        //        "(%lf, %lf)\n",
+        //        vertices[i]->x, vertices[i]->y, vertices[next_i]->x,
+        //        vertices[next_i]->y, poly2.vertices[j]->x,
+        //        poly2.vertices[j]->y, poly2.vertices[next_j]->x,
+        //        poly2.vertices[next_j]->y);
         return true;
       }
     }
@@ -263,12 +294,14 @@ bool Polygon::intersects(const Polygon &poly2) const {
 
   for (const Point *vertex : vertices) {
     if (poly2.point_inside(*vertex)) {
+      // printf("Vertex of p1 inside p2: (%lf, %lf)\n", vertex->x, vertex->y);
       return true;
     }
   }
 
   for (const Point *vertex : poly2.vertices) {
     if (point_inside(*vertex)) {
+      // printf("Vertex of p2 inside p1: (%lf, %lf)\n", vertex->x, vertex->y);
       return true;
     }
   }

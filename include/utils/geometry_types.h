@@ -54,6 +54,10 @@ struct Polygon {
   // return string containing the WKT representation of the polygon.
   std::string to_wkt();
   void save_vertices_to_csv(const char *output_file);
+
+  bool is_ccw() const;
+
+  void make_cw();
 };
 
 // returns polygon area using shoelace algo

@@ -38,6 +38,14 @@ std::vector<Polygon> read_data_find_MBR(const std::string &filename,
 
     Polygon polygon;
     polygon.vertices = parse_wkt(line);
+
+    if (polygon.is_ccw()) {
+      polygon.make_cw();
+    }
+
+    // if (polygon.vertices.size() > 30) {
+    //   continue;
+    // }
     // for (const Point* p : polygon.vertices) {
     //     std::cout << "(" << p->x << ", " << p->y << "), ";
     // }

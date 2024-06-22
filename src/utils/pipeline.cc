@@ -56,10 +56,24 @@ void find_interesctions(
   get_preprocessed_polygons(lhs_polygons, rhs_polygons, lhs_f_name, rhs_f_name,
                             gridMinCorner, gridMaxCorner);
 
-  std::vector<Polygon> lhs_polygons_copy = lhs_polygons;
-  std::vector<Polygon> rhs_polygons_copy = rhs_polygons;
+  std::vector<Polygon> lhs_polygons_vec = {lhs_polygons[82950 - 1]};
+  std::vector<Polygon> rhs_polygons_vec = {rhs_polygons[75624 - 1]};
+
+  save_polygons_to_csv(lhs_polygons_vec, "../lhs_p.csv");
+  save_polygons_to_csv(rhs_polygons_vec, "../rhs_p.csv");
+
+  // printf("%d\n", lhs_polygons[82950 - 1].intersects(rhs_polygons[75624 -
+  // 1]));
 
   RasterGrid grid = RasterGrid(N, gridMinCorner, gridMaxCorner);
+
+  // // print grid corners
+  // printf("Grid corners: %lf %lf %lf %lf\n", gridMinCorner.x, gridMinCorner.y,
+  //        gridMaxCorner.x, gridMaxCorner.y);
+
+  // exit(0);
+  std::vector<Polygon> lhs_polygons_copy = lhs_polygons;
+  std::vector<Polygon> rhs_polygons_copy = rhs_polygons;
 
   // run mbr combined sweep ------------------------------------------------
   std::pair<std::vector<Polygon>, std::vector<Polygon>> final_result;
@@ -129,6 +143,8 @@ void find_interesctions(
     result_set.insert(r);
   }
 
+  int count = 0;
+  int total = 0;
   // for each pair of polygon from final_result check if they intersect
   for (int i = 0; i < final_result.first.size(); i++) {
     // check if id in null_cell_code_poly_idxs
@@ -150,6 +166,7 @@ void find_interesctions(
           error_poly_idxs.end()) {
         continue;
       }
+      total++;
       Polygon lhs_p = lhs_polygons_copy[final_result.first[i].polygon_id - 1];
       Polygon rhs_p = rhs_polygons_copy[-final_result.second[j].polygon_id - 1];
 
@@ -159,13 +176,18 @@ void find_interesctions(
         if (result_set.find(p) == result_set.end()) {
           printf("ERROR ids: %d %d\n", final_result.first[i].polygon_id,
                  final_result.second[j].polygon_id);
-          std::vector<Polygon> lhs_p_vec = {final_result.first[i]};
-          std::vector<Polygon> rhs_p_vec = {final_result.second[j]};
-          save_polygons_to_csv(lhs_p_vec, "../lhs_p.csv");
-          save_polygons_to_csv(rhs_p_vec, "../rhs_p.csv");
-          exit(0);
+          count++;
+          // std::vector<Polygon> lhs_p_vec = {final_result.first[i]};
+          // std::vector<Polygon> rhs_p_vec = {final_result.second[j]};
+          // save_polygons_to_csv(lhs_p_vec, "../lhs_p.csv");
+          // save_polygons_to_csv(rhs_p_vec, "../rhs_p.csv");
+          // exit(0);
         }
       }
     }
   }
+  printf("Ratio of intersections algorithm did not found: %f\n",
+         (double)count / total);
+  printf("Total: %d\n", total);
+  printf("Our result: %d\n", result.size());
 }
