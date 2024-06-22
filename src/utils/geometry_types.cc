@@ -52,10 +52,13 @@ void Polygon::findMBR() {
   }
 }
 
-void Polygon::save_poly(const char *output_file, const char *mode) {
+void Polygon::save_poly(const char *output_file, const char *mode, bool append_poly) {
   FILE *fp = fopen(output_file, mode);
   for (int i = 0; i < vertices.size(); ++i) {
     fprintf(fp, "%lf %lf\n", vertices[i]->x, vertices[i]->y);
+  }
+  if (append_poly) {
+    fprintf(fp, "POLYGON\n");
   }
   fclose(fp);
 }

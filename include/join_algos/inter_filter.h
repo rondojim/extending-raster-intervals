@@ -310,7 +310,7 @@ public:
   // TO BE IMPLEMENTED
   // IS NOT COMPLETED
   bool save_polygons_grid(const char *output_file, std::vector<Polygon>& polygons, 
-   std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo> &i_j_to_rcell_info, const char *mode);
+   std::vector<RasterPolygonInfo> i_j_to_rpoly_info, const char *mode = "w");
 };
 
 // rasterize the lhs_polygons, rhs_polygons and save their 
@@ -363,7 +363,7 @@ void save_vertices_vectors_seg(std::vector<std::vector<const Point *>> vertices_
                      const Point &p1, const Point &p2,
                      const char *output_file="clip_error.txt");
 
-//  save clipped vertices in output_file in given mode
+// save clipped vertices in output_file in given mode
 // in format:
 // x0 y0 
 // x1 y1

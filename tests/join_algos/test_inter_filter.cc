@@ -66,7 +66,7 @@ bool test_polygon_area(double orig_poly_area,
 
 void print_test_error_info(Polygon polygon, RasterGrid grid)
 {
-    print_vec(polygon.vertices);
+   // print_vec(polygon.vertices);
     std::cout << std::endl;
 
     Point min_corner = polygon.minCorner;
@@ -110,8 +110,7 @@ int test_rasterize_polygons(
   std::vector<Polygon> polygons;
   Point gridMinCorner, gridMaxCorner;
   get_preprocessed_polygons(polygons, f_name, gridMinCorner, gridMaxCorner, -1);
-
-  polygons[0].save_poly("test_poly.txt");
+  std::cout << polygons.size();
 
   size_t total_tests = polygons.size();
   std::cout << "Total tests: " << total_tests << std::endl;
@@ -124,7 +123,8 @@ int test_rasterize_polygons(
   }
 
   // Construct Grid
-  RasterGrid grid = RasterGrid(N, gridMinCorner, gridMaxCorner);
+  //RasterGrid grid = RasterGrid(N, Point(0, 0), Point(10,10));
+  RasterGrid grid =RasterGrid(N, gridMinCorner, gridMaxCorner);
   std::cout << "Grid mbr: " << grid.max_corner.to_str() << grid.min_corner.to_str() << std::endl;
 
   auto start_time = std::chrono::steady_clock::now();
@@ -140,7 +140,11 @@ int test_rasterize_polygons(
         i_j_to_rcell_info;
 
     int weiler_success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info);
-    std::cout << "weiler_success: " <<weiler_success<< std::endl;
+
+    grid.save_poly_raster("poly_raster.txt", polygon, i_j_to_rcell_info);
+    save_clipped_vertices_cell_type("clipped_vertices_cell_type.txt", i_j_to_rcell_info);
+    // print_test_error_info(polygon, grid);
+
     if (weiler_success != 1) {
         success = -1;
         error_polygons.push_back(polygon);
@@ -187,17 +191,22 @@ int test_rasterize_polygons(
       std::cout << "Saving " << error_polygons.size() << " error polygons in file " << err_poly_f_name << std::endl;
       save_polygons_to_csv(error_polygons, err_poly_f_name.c_str());
   }
+
+  grid.save_polygons_grid("polygons_grid.txt", polygons, i_j_to_rpoly_info);
+  
   return success;
 }
 
 int main() {
-  unsigned int N = 2;
-  std::string f_name("../../datasets/test.csv");
+  unsigned int N = 5;
+  // std::string f_name("datasets/test.csv");
+  std::string f_name("datasets/special_cases.csv");
   // // std::string f_name("../../datasets/T1.csv");
   // std::string f_name("rhs_p.csv");
 
   std::vector<RasterPolygonInfo> i_j_to_rpoly_info;
   int success = test_rasterize_polygons(N, f_name, i_j_to_rpoly_info, "", "error_polygons.csv");
+
 
   if (!success){
     return success;  

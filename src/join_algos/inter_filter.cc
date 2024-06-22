@@ -115,7 +115,6 @@ bool RasterGrid::set_segment_borders_types(const Point &p1, const Point &p2, std
   unsigned int parallelism = checkParallelism(p1, p2);
   int min_col_idx = -1, max_col_idx = -1, min_row_idx = -1, max_row_idx = -1; 
   double xmin = min_corner.x, xmax = max_corner.y, ymin = min_corner.x, ymax = max_corner.y;
-  
   if (!parallelism) {
     return true;
   }
@@ -127,6 +126,7 @@ bool RasterGrid::set_segment_borders_types(const Point &p1, const Point &p2, std
       return false;
     }
     if (y_is_on_grid_row){
+      // std::cout << "y_is_on_grid_row: " << p1.to_str() << " - " << p2.to_str() << std::endl;
       int row_idx = sequence_idx(p1.y, ymin);
       min_row_idx, max_row_idx;
       if (row_idx == 0) {
@@ -186,6 +186,7 @@ bool RasterGrid::set_segment_borders_types(const Point &p1, const Point &p2, std
     }
     // std::cout << "y_is_on_grid_col: " << y_is_on_grid_col << std::endl;
     if (y_is_on_grid_col){
+      // std::cout << "y_is_on_grid_col: " << p1.to_str() << " - " << p2.to_str() << std::endl;
       int col_idx = sequence_idx(p1.x, xmin);
       min_col_idx, max_col_idx;
       if (col_idx == 0) {
@@ -246,10 +247,11 @@ bool RasterGrid::set_segment_borders_types(const Point &p1, const Point &p2, std
   BinaryCellCode weak_cell_code = BinaryCellCode(BinaryCellCode::WEAK_R);
   std::vector<std::vector<const Point*>> empty_vec; 
   RasterCellInfo weak_rcell_info = RasterCellInfo(empty_vec, weak_cell_code);
-
-  for (int j = min_row_idx; j <= max_row_idx; j++) {   
+  // std::cout << "min_row_idx: " << min_row_idx << ", max_row_idx: " << max_row_idx << std::endl;
+  // std::cout << "min_col_idx: " << min_col_idx << ", max_col_idx: " << max_col_idx << std::endl;
+  for (int i = min_row_idx; i <= max_row_idx; i++) {   
     // double y1 = min_corner.y + j * step, y2 = min_corner.y + (j+1) * step;
-    for (int i = min_col_idx; i <= max_col_idx; i++) {
+    for (int j = min_col_idx; j <= max_col_idx; j++) {
       // double x1 = min_corner.x + i * step, x2 = min_corner.x + (i+1) * step;
       std::pair<int, int> j_i = {j, i};
       i_j_to_rcell_info[j_i] = weak_rcell_info;

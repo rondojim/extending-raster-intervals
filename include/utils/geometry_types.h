@@ -43,7 +43,7 @@ struct Polygon {
   // x0 y0
   // x1 y1
   // xn yn
-  void save_poly(const char *output_file, const char *mode = "w");
+  void save_poly(const char *output_file, const char *mode = "w", bool append_poly=false);
 
   // prints the vertices of the polygon
   void print_();
