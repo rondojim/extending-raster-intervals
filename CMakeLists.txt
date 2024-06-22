@@ -39,6 +39,8 @@ set(TEST_FILES
     tests/mbr_algos/test_2d_segt.cc
     tests/mbr_algos/test_no_inside.cc
     tests/mbr_algos/test_no_outside.cc
+    tests/join_algos/test_join.cc
+    tests/join_algos/test_inter_filter.cc
 )
 
 # Add test executables

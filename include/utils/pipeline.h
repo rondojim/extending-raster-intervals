@@ -4,14 +4,14 @@
 #include <set>
 #include <vector>
 
-static void id_polygons(std::vector<Polygon> &polygons, bool lhs);
+void id_polygons(std::vector<Polygon> &polygons, bool lhs);
 
-static void get_preprocessed_polygons(std::vector<Polygon> &lhs,
-                                      std::vector<Polygon> &rhs,
-                                      const std::string &filename_lhs,
-                                      const std::string &filename_rhs,
-                                      Point &gridMinCorner,
-                                      Point &gridMaxCorner, int n = -1);
+void get_preprocessed_polygons(std::vector<Polygon> &lhs,
+                               std::vector<Polygon> &rhs,
+                               const std::string &filename_lhs,
+                               const std::string &filename_rhs,
+                               Point &gridMinCorner, Point &gridMaxCorner,
+                               int n = -1);
 
 void find_interesctions(
     unsigned int N, std::string lhs_f_name, std::string rhs_f_name,

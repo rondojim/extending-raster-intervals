@@ -1,3 +1,4 @@
+#include "../../include/utils/pipeline.h"
 #include "../../include/join_algos/inter_filter.h"
 #include "../../include/join_algos/ri_join_algo.h"
 #include "../../include/join_algos/serialize_polygon.h"
@@ -11,9 +12,8 @@
 #include <chrono>
 #include <set>
 #include <vector>
-#include "../../include/utils/pipeline.h"
 
-static void id_polygons(std::vector<Polygon> &polygons, bool lhs) {
+void id_polygons(std::vector<Polygon> &polygons, bool lhs) {
   int id = 1;
   for (auto &it : polygons) {
     it.polygon_id = (lhs ? id : -id);
@@ -21,12 +21,12 @@ static void id_polygons(std::vector<Polygon> &polygons, bool lhs) {
   }
 }
 
-static void get_preprocessed_polygons(std::vector<Polygon> &lhs,
-                                      std::vector<Polygon> &rhs,
-                                      const std::string &filename_lhs,
-                                      const std::string &filename_rhs,
-                                      Point &gridMinCorner,
-                                      Point &gridMaxCorner, int n) {
+void get_preprocessed_polygons(std::vector<Polygon> &lhs,
+                               std::vector<Polygon> &rhs,
+                               const std::string &filename_lhs,
+                               const std::string &filename_rhs,
+                               Point &gridMinCorner, Point &gridMaxCorner,
+                               int n) {
   Point lhsMinCorner, lhsMaxCorner, rhsMinCorner, rhsMaxCorner;
   lhs = read_data_find_MBR(filename_lhs, lhsMinCorner, lhsMaxCorner, n);
   printf("Read first set\n");
