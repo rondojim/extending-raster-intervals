@@ -7,7 +7,7 @@ std::vector<const Point *> parse_wkt(const std::string &wkt) {
   std::vector<const Point *> vertices;
   std::string clean_wkt = wkt.substr(11); // Skip the "POLYGON ((" part
   clean_wkt =
-      clean_wkt.substr(0, clean_wkt.size() - 8); // Remove the trailing "))"
+      clean_wkt.substr(0, clean_wkt.size() - 3); // Remove the trailing "))"
   std::istringstream iss(clean_wkt);
   std::string temp;
   while (std::getline(iss, temp, ',')) {

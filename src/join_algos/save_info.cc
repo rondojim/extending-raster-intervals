@@ -47,18 +47,28 @@ void save_vertices_vectors_seg(std::vector<std::vector<const Point *>> vertices_
 }
 
 
-void save_clipped_vertices(
+void save_clipped_vertices_vectors(
     const char *output_file,
-    const std::map<std::pair<unsigned int, unsigned int>,
-                   const std::vector<const Point *>> &i_j_to_clipped_vertices,
-    const char *mode) {
+    std::map<int, std::vector<std::vector<const Point *>>> &i_j_to_clipped_vertices,
+    const char *mode){
 
+  int cnt = 0;
   FILE *fp = fopen(output_file, mode);
   for (const auto &entry : i_j_to_clipped_vertices) {
-    for (const Point *point : entry.second) {
-      fprintf(fp, "%lf %lf\n", point->x, point->y);
+    const std::vector<std::vector<const Point*>> vertices_vectors = entry.second;
+    for (const std::vector<const Point *> &vertices : vertices_vectors) {
+      
+      if (!cnt){
+        save_vertices(vertices, output_file, "w");
+      }
+      else{
+        save_vertices(vertices, output_file, "a");
+      }
+  
+      fprintf(fp, "poly\n");
+      cnt++;
     }
-    fprintf(fp, "poly %d %d\n", entry.first.first, entry.first.second);
+    fprintf(fp, "column %d\n", entry.first);
   }
   fclose(fp);
 }

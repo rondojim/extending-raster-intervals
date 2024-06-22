@@ -411,6 +411,21 @@ const char *BinaryCellCode::to_type(bool debug) const {
   return "NULL";
 }
 
+// Equality check
+bool BinaryCellCode::equals(const BinaryCellCode& other) const {
+    return (this->value == other.value) && (this->type_R == other.type_R);
+}
+
+// Overload equality operator
+bool operator==(const BinaryCellCode& lhs, const BinaryCellCode& rhs) {
+    return lhs.equals(rhs);
+}
+
+// Overload inequality operator
+bool operator!=(const BinaryCellCode& lhs, const BinaryCellCode& rhs) {
+    return !(lhs == rhs);
+}
+
 bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::vector<Polygon> &rhs_polygons,
                         std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
@@ -477,4 +492,59 @@ int get_double_sigh(double x, double epsilon) {
     return -1;
   }
   return 1;
+}
+
+// 1 true hit
+// 2 indecisive
+int join_cell_types(BinaryCellCode l_cell_type, BinaryCellCode r_cell_type) {
+    if (r_cell_type == BinaryCellCode::FULL_S || l_cell_type == BinaryCellCode::FULL_R || (r_cell_type == BinaryCellCode::STRONG_S && l_cell_type == BinaryCellCode::STRONG_R)) {
+      return 1;
+    }
+
+    return 2;
+}
+
+
+void join_poly_cell_types(std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
+                        std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
+                        std::vector<std::pair<int, int>> &result,
+                        std::vector<std::pair<int, int>> &indecisive) {
+
+    for (RasterPolygonInfo& l_rpoly_info: lhs_i_j_to_rpoly_info) {
+        int l_idx = l_rpoly_info.idx;
+        std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo> &l_rcells_info = l_rpoly_info.i_j_to_rcell_info;
+
+        for (RasterPolygonInfo& r_rpoly_info : rhs_i_j_to_rpoly_info) {
+          int r_idx = r_rpoly_info.idx;
+          std::pair<int, int> l_r_idx = {l_idx, r_idx};
+          int inter = 0;
+
+          std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo> &r_rcells_info = r_rpoly_info.i_j_to_rcell_info;
+
+            for (const auto& l_cell : l_rcells_info) {
+                std::pair<unsigned int, unsigned int> l_cell_j_i = l_cell.first;
+                RasterCellInfo l_cell_info = l_cell.second;
+
+                auto r_cell_it = r_rcells_info.find(l_cell_j_i);
+                if (r_cell_it != r_rcells_info.end()) {
+
+                    RasterCellInfo r_cell_info = r_cell_it->second;
+                    inter = join_cell_types(l_cell_info.cell_type, r_cell_info.cell_type);
+                    if (inter == 1) {
+                        std::cout << "interesct in i,j: " << l_cell_j_i.first << ", " << l_cell_j_i.second << std::endl;
+                        break;
+                    }
+
+                }
+            }
+
+            if (inter == 1) {
+                result.push_back(l_r_idx);
+            }
+            else if (inter == 2) {
+                indecisive.push_back(l_r_idx);
+            }
+
+        }
+    }                        
 }

@@ -69,8 +69,10 @@ void Polygon::print_() {
 }
 
 
-std::string Polygon::to_wkt() const {
+std::string Polygon::to_wkt() {
     std::ostringstream oss;
+    // Set fixed format and precision for output
+    oss << std::fixed << std::setprecision(7);
     oss << "\"POLYGON ((";
     for (size_t i = 0; i < vertices.size(); ++i) {
         if (i != 0) {
@@ -82,14 +84,36 @@ std::string Polygon::to_wkt() const {
     return oss.str();
 }
 
-void save_polygons_to_csv(const std::vector<Polygon>& polygons, const char* output_file) {
+void Polygon::save_vertices_to_csv(const char* output_file) {
     std::ofstream file(output_file);
     if (!file.is_open()) {
         std::cerr << "Error opening file: " << output_file << std::endl;
         return;
     }
 
-    for (const auto& polygon : polygons) {
+    // Set fixed format and precision for output
+    file << std::fixed << std::setprecision(7);
+
+    // Write vertices to CSV
+    for (const auto& vertex : vertices) {
+        file << vertex->x << ", " << vertex->y << "\n";
+    }
+
+    file.close();
+    std::cout << "Vertices saved to " << output_file << std::endl;
+}
+
+void save_polygons_to_csv(std::vector<Polygon>& polygons, const char* output_file) {
+    std::ofstream file(output_file);
+    if (!file.is_open()) {
+        std::cerr << "Error opening file: " << output_file << std::endl;
+        return;
+    }
+
+    // Set fixed format and precision for output
+    file << std::fixed << std::setprecision(7);
+
+    for (auto& polygon : polygons) {
         file << polygon.to_wkt() << "\n";
     }
 

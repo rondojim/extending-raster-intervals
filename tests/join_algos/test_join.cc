@@ -104,8 +104,8 @@ static void get_preprocessed_polygons(std::vector<Polygon> &polygons,
 
 }
 
-int test_rasterize_polygons(
-    unsigned int N, std::string f_name, std::vector<RasterPolygonInfo>& i_j_to_rpoly_info, std::string info_file_name = "", std::string err_poly_f_name="") {
+int test_join(
+    unsigned int N, std::string f_name, std::string f_name, std::vector<RasterPolygonInfo>& i_j_to_rpoly_info, std::string info_file_name = "", std::string err_poly_f_name="") {
 
   std::vector<Polygon> polygons;
   Point gridMinCorner, gridMaxCorner;
@@ -192,12 +192,11 @@ int test_rasterize_polygons(
 
 int main() {
   unsigned int N = 2;
-  std::string f_name("../../datasets/test.csv");
-  // // std::string f_name("../../datasets/T1.csv");
-  // std::string f_name("rhs_p.csv");
+  std::string rhs_f_name("../../dataset_files/OSM_by_continent/O5OC");
+  std::string lhs_f_name("../../dataset_files/OSM_by_continent/O6OC");
 
   std::vector<RasterPolygonInfo> i_j_to_rpoly_info;
-  int success = test_rasterize_polygons(N, f_name, i_j_to_rpoly_info, "", "error_polygons.csv");
+  int success = test_join(N, lhs_f_name, lhs_f_name, "", "error_polygons.csv");
 
   if (!success){
     return success;  

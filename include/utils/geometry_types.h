@@ -53,7 +53,8 @@ struct Polygon {
   bool point_inside(const Point &p) const;
 
   // return string containing the WKT representation of the polygon.
-  std::string to_wkt() const ;
+  std::string to_wkt() ;
+  void save_vertices_to_csv(const char* output_file) ;
 };
 
 // returns polygon area using shoelace algo
@@ -90,7 +91,7 @@ Point *p_intersect(const Point &p1, const Point &p2, const Point &p3,
 
 // Function to save a list of polygons to a CSV file
 // in wkt
-void save_polygons_to_csv(const std::vector<Polygon>& polygons, const char* output_file);
+void save_polygons_to_csv(std::vector<Polygon>& polygons, const char* output_file);
 
 // get total area of polygons in vertices_vectors
 double get_polygons_area(std::vector<std::vector<const Point *>> &vertices_vectors);

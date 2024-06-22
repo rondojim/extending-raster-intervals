@@ -9,12 +9,12 @@
 #include <vector>
 #include <set>
 
-// expresses the direction of interesctio 
-// of a segment wrt another segment
+// expresses the direction of a segment whcih interesect 
+// another segment 
 enum Direction {
   RIGHT = 1,
   LEFT = 2,
-  NONE = 0,
+  NONE = 0, // for collinear points 
 };
 
 struct PointInfo {
@@ -72,7 +72,17 @@ struct BinaryCellCode {
 
   // convert binary to char* FULL, STRONG, WEAK, NULL
   const char *to_type(bool debug = false) const;
+
+  // Equality check
+  bool equals(const BinaryCellCode& other) const;
+
 };
+
+// Overload equality operator
+bool operator==(const BinaryCellCode& lhs, const BinaryCellCode& rhs);
+
+// Overload inequality operator
+bool operator!=(const BinaryCellCode& lhs, const BinaryCellCode& rhs);
 
 struct RasterCellInfo {
   std::vector<std::vector<const Point *>> cell_polygons; // the cell polygons after clipping
@@ -113,10 +123,8 @@ private:
   // to xmax with the step of the grid
   int k_belongs_in_sequence(double xmin, double xmax, double k, double epsilon = 1e-6);
 
-  // double idx_to_coord(int idx, double xmin);
-
   // i_pos, nxt_i_pos describe the side of a point and each next: 
-  // wrt to another segment: < 0 on the left, > 0 on the right else on
+  // wrt to a clipping segment: < 0 on the left, > 0 on the right else on
   // the other segment. Based on that insert points in left_vert_clipped_points,
   // right_vert_clipped_points according to hodgman algo. For the first vector 
   // the visible side is the left while fot the second the right
@@ -126,20 +134,33 @@ private:
                     std::vector<const Point *> &right_vert_clipped_points,
                     bool debug);
 
-
-  // clip the polygon with vertices elements (should be in cw order)
-  // w.r.t. clipper line with points x1, y1, x2, y2
+  // Given segment, vertices should be in cw order.
+  // Clip the polygon wrt the segment p1,p2 
   // Insert points on the left of the line in left_vert_clipped_points
   // and points on the right of the line in right_vert_clipped_points
+  // considering as visible to left_vert_clipped_points the left side
+  // and the opposite for the right_vert_clipped_points
   bool hodgman_clip(const std::vector<const Point *> &vertices,
             std::vector<const Point *> &left_vert_clipped_points,
             std::vector<const Point *> &right_vert_clipped_points,
             const Point &p1, const Point &p2, bool debug);
 
 
+  // sort indexes which enumerate the inter_pts_info together
+  // with inter_pts_info on ascending order basen x or y coord
+  // determinded by sort_by_y
+  void sort_inter_points(std::vector<size_t> &indexes,
+                       std::vector<InterPointInfo> &inter_pts_info,
+                       bool sort_by_y);
+
   // we find intersections between vertices and the segment p1,p2
-  // and split the vertices, interescions in vertices_with_info, 
-  // inter_pts_info according to weiler clip algorithm
+  // and split the vertices, interesctions in vertices_with_info, 
+  // inter_pts_info, ie the preprocessing step of weiler clip algorithm
+  // with the adjustment that the clipping polygon is a segment (row or column)
+  // return -1 in case of error
+  // return 1 if all points on the right of the line
+  // return 2 if all points on the left of the line
+  // else return 0
   int weiler_scan_polygon(const std::vector<const Point *> &vertices,
                           const Point &p1, const Point &p2,
                           std::vector<PointInfo> &vertices_with_info,
@@ -150,7 +171,7 @@ private:
   // adding points until meet exit_dir 
   // max_iters are added for case of error (infinite loop)
   // Returns the entering (on intersection points) idx on success,
-  // else -1
+  // and -1 in case of error
   int walk_on_polygon_vertices(std::vector<const Point *> &polygon_to_fill,
                                std::vector<PointInfo> &vertices_with_info,
                                Direction exit_dir, int start_idx,
@@ -161,7 +182,8 @@ private:
   // or down adding points in polygon_to_fill until meet exit_dir 
   // saving the exiting point in exit_point
   // max_iters are added for case of error (infinite loop)
-  // Returns the entering (on polygon) point index on success, else -1
+  // Returns the entering (on polygon) point index on success, 
+  // and -1 in case of error
   int walk_on_inter_vertices(std::vector<const Point *> &polygon_to_fill,
                              std::vector<InterPointInfo> &inter_pts_info,
                              Direction exit_dir, int start_idx, int step,
@@ -229,21 +251,44 @@ public:
   // of the grid is grid_side/2^n_
   RasterGrid(double n_, Point min_corner_, Point max_corner_);
 
-  // rasterixe the polygon and save result for each cell 
-  // in map with key the cell pos i,j and value RasterCellInfo
-  // using the weiler clipping algorithm
-  // return 2 in case of null cell code,
-  // 0 for any other error
-  // 1, on success
-  int weiler_rasterize_poly(Polygon &polygon,
+  /*
+  rasterize the polygon and save result for each cell 
+  in map with key the cell pos i,j and value RasterCellInfo
+  using the hodgman clipping algorithm adjusted to clip
+  wrt a segment (row/column) each time.
+  We clip the polygon first vertically (per column)
+  and the resulting clipped polygons will be clipped horizontally
+  to take the final resulting clipped polygons per cell of the grid
+  When clipping wrt to a column (vertically), the left side column will be fully clipped
+  and for the next (right column) we will use the remaining polygon which
+  lay in the right of the column which is refered as semi/right clipped 
+  The same holds for the horizontal clipping starting from top to bottom
+
+  return true on success, else false
+  */
+  bool hodgman_rasterize_poly(Polygon &polygon,
                              std::map<std::pair<unsigned int, unsigned int>,
                                       RasterCellInfo> &i_j_to_rcell_info,
                              bool debug = false);
 
-  // rasterixe the polygon and save result for each cell 
-  // in map with key the cell pos i,j and value RasterCellInfo
-  // using the hodgman clipping algorithm
-  bool hodgman_rasterize_poly(Polygon &polygon,
+  /*
+  rasterize the polygon and save result for each cell 
+  in map with key the cell pos i,j and value RasterCellInfo
+  using the weiler clipping algorithm adjusted to clip
+  wrt a segment (row/column) each time.
+  We clip the polygon first vertically (per column)
+  and the resulting clipped polygons will be clipped horizontally
+  to take the final resulting clipped polygons per cell of the grid
+  When clipping wrt to a column (vertically), the left side column will be fully clipped
+  and for the next (right column) we will use the remaining polygon which
+  lay in the right of the column which is refered as semi/right clipped 
+  The same holds for the horizontal clipping starting from top to bottom
+
+  return 2 in case of null cell code,
+  0 for any other error
+  1, on success
+  */
+  int weiler_rasterize_poly(Polygon &polygon,
                              std::map<std::pair<unsigned int, unsigned int>,
                                       RasterCellInfo> &i_j_to_rcell_info,
                              bool debug = false);
@@ -278,6 +323,11 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::set<int> &error_poly_idxs,
                         std::string err_poly_f_name="", bool debug=false);
 
+void join_poly_cell_types(std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
+                        std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
+                        std::vector<std::pair<int, int>> &result,
+                        std::vector<std::pair<int, int>> &indecisive);
+
 int get_double_sigh(double x, double epsilon = 1e-24);
 bool are_equal(double a, double b, double epsilon = 1e-20);
 bool is_greater_or_equal(double a, double b, double epsilon = 1e-20);
@@ -302,10 +352,11 @@ void save_vertices(std::vector<const Point *> vertices, const char *output_file,
 // x1 y1
 // xn yn
 // poly
-void save_vertices_vectors(
+// column j
+void save_clipped_vertices_vectors(
     const char *output_file,
-    std::vector<std::vector<const Point *>> &vertices_vectors,
-    const char *mode = "w");
+    std::map<int, std::vector<std::vector<const Point *>>> &i_j_to_clipped_vertices,
+    const char *mode= "w");
 
 // save segment p1, p2 and vertices vectors in output file in given mode
 void save_vertices_vectors_seg(std::vector<std::vector<const Point *>> vertices_vectors,

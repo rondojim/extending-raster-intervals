@@ -23,7 +23,7 @@ bool RasterGrid::weiler_clip_vertices_vectors(
   return true;
 }
 
-void sort_inter_points(std::vector<size_t> &indexes,
+void RasterGrid::sort_inter_points(std::vector<size_t> &indexes,
                        std::vector<InterPointInfo> &inter_pts_info,
                        bool sort_by_y) {
   // Sort the indexes vector based on the boolean flag
@@ -77,8 +77,10 @@ int RasterGrid::weiler_scan_polygon(const std::vector<const Point *> &vertices,
     int nxt_i_pos_sigh = get_double_sigh(nxt_i_pos);
 
     if (i_pos_sigh < 0) {
+      // we have at least one point on the right of the segment p1,p2
       point_on_right = true;
     } else if (i_pos_sigh > 0) {
+      // we have at least one point on left of the segment p1,p2
       point_on_left = true;
     }
 
@@ -89,10 +91,16 @@ int RasterGrid::weiler_scan_polygon(const std::vector<const Point *> &vertices,
 
     const Point *p_inter = nullptr;
     Direction dir = Direction::NONE;
+
+    // indicates the index on the intersection point
+    // in case we have interesection and we are entering/exiting
+    // the polygon vertices
     int inter_p_idx = inter_pts_info.size();
 
     bool are_collinear = (i_pos_sigh == 0 && nxt_i_pos_sigh == 0);
 
+    // indicates the index on the polygon point
+    // in case we are entering/exiting the polygon
     int nxt_point_idx = vertices_with_info.size();
     if (are_collinear) {
       p_inter = p_i;
@@ -102,6 +110,9 @@ int RasterGrid::weiler_scan_polygon(const std::vector<const Point *> &vertices,
       InterPointInfo inter_p_info = InterPointInfo(p_inter, dir, nxt_point_idx);
       inter_pts_info.push_back(inter_p_info);
     } else if (i_pos_sigh * nxt_i_pos_sigh <= 0) {
+      // we are sure the current i, nxt_i segment intersects the p1,p2
+
+      // left or right direction wrt to sef p1, p2 based on orientation
       if ((i_pos_sigh == 0 && nxt_i_pos_sigh > 0) ||
           (i_pos_sigh < 0 && nxt_i_pos_sigh == 0) ||
           (i_pos_sigh < 0 && nxt_i_pos_sigh > 0)) {
@@ -116,6 +127,8 @@ int RasterGrid::weiler_scan_polygon(const std::vector<const Point *> &vertices,
         dir = Direction::RIGHT;
       }
 
+      // we are sure there is interesction and
+      // we find the interesction point
       p_inter = p_intersect(p1, p2, *p_i, *p_nxt_i);
 
       if (nxt_i_pos_sigh != 0) {
@@ -130,7 +143,7 @@ int RasterGrid::weiler_scan_polygon(const std::vector<const Point *> &vertices,
           }
         } else {
           nxt_point_idx = 0; // no other vertice will be added, the interestion
-                             // tail is the first point inseted
+                             // tail is the first point inserted
         }
 
         if (debug) {
@@ -183,12 +196,15 @@ bool RasterGrid::weiler_clip(
     // if all points on the left
     left_vertices_vectors.push_back(vertices);
   } else {
+    // indexes corresponding to inter_pts_info initi position
     std::vector<size_t> indexes(inter_pts_info.size());
     std::iota(indexes.begin(), indexes.end(), 0);
 
     // if we do vertical clipping sort by x
     // else by y
     bool vertical_clip = (p1.x == p2.x);
+    // we sort indexes to, in order to have a map
+    // from the initial pos to the pos after sorting
     sort_inter_points(indexes, inter_pts_info, vertical_clip);
 
     // old_to_new role is the maping of the old inter_pts_info
@@ -253,16 +269,24 @@ bool RasterGrid::weiler_clip(
       std::cout << std::endl;
     }
 
-    std::vector<const Point *> cur_polygon;
+  	// a concave polygon after clipping might result
+    // in multiple polygons wrt to a line
+    // eg the shape of letter M closed in the bottom
+    // clipped wrt the a segment parallel on the x axis
+    // interesecting it somewhere higher than the middle y
+    std::vector<const Point *> cur_polygon; 
     int total_iters = 0;
     for (InterPointInfo &inter_p_info : inter_pts_info) {
-
+      
+      // visit each entering point only once and a NONE dir indicated
+      // collinear point the segment which we do not claim as 
       if (!inter_p_info.visited && inter_p_info.dir != Direction::NONE) {
         if (debug) {
           std::cout << "START: ( " << inter_p_info.inter_point->x << ", "
                     << inter_p_info.inter_point->y << ")\n";
         }
 
+        // entering point belong the clipped polygon
         cur_polygon.push_back(inter_p_info.inter_point);
         inter_p_info.visited = true;
         const Point *cur_p_inter = nullptr;
@@ -291,7 +315,6 @@ bool RasterGrid::weiler_clip(
           std::cerr << "Error: There is inter_p_info.dir with NULL direction\n";
         }
 
-        // std::cout << "step: " << inter_pts_step << std::endl;
         while (cur_p_inter != inter_p_info.inter_point &&
                total_iters++ < max_iters) {
           if (debug) {
@@ -363,10 +386,13 @@ bool RasterGrid::weiler_clip(
   return true;
 }
 
+
 int RasterGrid::walk_on_polygon_vertices(
     std::vector<const Point *> &polygon_to_fill,
     std::vector<PointInfo> &vertices_with_info, Direction exit_dir,
-    int start_idx, unsigned int max_iters, bool debug) {
+    int start_idx, unsigned int max_iters, bool debug) 
+{
+
   Direction cur_dir = vertices_with_info[start_idx].dir;
   int total_iters = 0;
   int cur_idx = start_idx;
@@ -386,6 +412,7 @@ int RasterGrid::walk_on_polygon_vertices(
   }
 
   if (total_iters > max_iters) {
+    // for case of infinite loop
     std::cerr << "Error in walk_on_polygon: max_iters == total_iters\n";
     return -1;
   }
@@ -424,6 +451,7 @@ int RasterGrid::walk_on_inter_vertices(
   }
 
   if (total_iters > max_iters) {
+    // for case of infinite loop
     std::cerr << "Error in walk_on_intersections: max_iters == total_iters\n";
     return -1;
   }
@@ -453,6 +481,8 @@ int RasterGrid::weiler_rasterize_poly(
     return 0;
   }
 
+  // Find the corners of the grid 
+  // that enclose the polygon mbr 
   double xmin =
       max_below_or_equal_k(min_corner.x, max_corner.x, polygon.minCorner.x);
   double ymin =
@@ -469,6 +499,7 @@ int RasterGrid::weiler_rasterize_poly(
     return 0;
   }
 
+  // Find the rows, columns indexes of previous coordinates on the mbr
   int xmin_idx = sequence_idx(xmin, min_corner.x);
   int xmax_idx = sequence_idx(xmax, min_corner.x);
 
@@ -483,7 +514,7 @@ int RasterGrid::weiler_rasterize_poly(
       fully_hori_clipped_vertices, semi_hori_clipped_vertices,
       cur_hori_clipped_vertices;
 
-  std::map<unsigned int, std::vector<std::vector<const Point *>>>
+  std::map<int, std::vector<std::vector<const Point *>>>
       j_to_vertices_vectors;
 
   cur_vert_clipped_vertices = vertices_vectors;
@@ -496,6 +527,8 @@ int RasterGrid::weiler_rasterize_poly(
     fully_vert_clipped_vertices.clear();
 
     if (j == xmax_idx - 1) {
+      // in the last column the semi_vert_clipped_vertices, ie
+      // the remaining clipped vertices are fully clipped 
       cur_hori_clipped_vertices = semi_vert_clipped_vertices;
     } else {
       semi_vert_clipped_vertices.clear();
@@ -522,7 +555,10 @@ int RasterGrid::weiler_rasterize_poly(
     semi_hori_clipped_vertices = cur_hori_clipped_vertices;
 
     // FOR TESTING
-    j_to_vertices_vectors[j] = semi_hori_clipped_vertices;
+    if (semi_hori_clipped_vertices.size()){
+      std::vector<std::vector<const Point*>> cur_vec = semi_hori_clipped_vertices;
+      j_to_vertices_vectors[j] = cur_vec;
+    }
 
     for (int i = ymax_idx - 1; i >= ymin_idx; i--) {
       fully_hori_clipped_vertices.clear();
@@ -533,6 +569,9 @@ int RasterGrid::weiler_rasterize_poly(
       Point p2_hori(x_j, y_i);
 
       if (i == ymin_idx) {
+        // in the lowest row the semi_hori_clipped_vertices, ie
+        // the remaining clipped vertices are fully clipped (being up to the last row)
+
         if (semi_hori_clipped_vertices.size()) {
           BinaryCellCode cell_code =
               encode(semi_hori_clipped_vertices, p1_hori, p2_hori);
@@ -556,11 +595,11 @@ int RasterGrid::weiler_rasterize_poly(
         int success = weiler_clip_vertices_vectors(
             cur_hori_clipped_vertices, fully_hori_clipped_vertices,
             semi_hori_clipped_vertices, p1_hori, p2_hori, debug);
-        if (!success) {
-          save_vertices_vectors("col_error.txt", j_to_vertices_vectors[j]);
-          std::cout << "Failed in [" << i << ", " << j << "]\n";
-          return 0;
-        }
+        // if (!success) {
+        //   save_vertices_vectors("col_error.txt", j_to_vertices_vectors[j]);
+        //   std::cout << "Failed in [" << i << ", " << j << "]\n";
+        //   return 0;
+        // }
 
         cur_hori_clipped_vertices = semi_hori_clipped_vertices;
         if (fully_hori_clipped_vertices.size()) {
@@ -584,6 +623,8 @@ int RasterGrid::weiler_rasterize_poly(
       }
     }
   }
+
+  save_clipped_vertices_vectors("column_rasterization.txt", j_to_vertices_vectors);
 
   return 1;
 }

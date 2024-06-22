@@ -149,14 +149,6 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
   int ymin_idx = sequence_idx(ymin, min_corner.y);
   int ymax_idx = sequence_idx(ymax, min_corner.y);
 
-  // we will clip the polygon first vertically (per column)
-  // and the resulting clipped polygons will be clipped horizontally
-  // to take the final resulting clipped polygons per cell of the grid
-  // When clipping wrt to a column (vertically), the left side column will be fully clipped
-  // and for the next (right column) we will use the remaining polygon which
-  // fall is in the the right of the column which is refered as semi/right clipped 
-  // the same holds for the horizontal clipping starting from top to bottom
-
   std::vector<const Point*> fully_vert_clipped_vertices, semi_vert_clipped_vertices, 
       cur_vert_clipped_vertices, fully_hori_clipped_vertices, 
       semi_hori_clipped_vertices, cur_hori_clipped_vertices; 
@@ -170,8 +162,8 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
       fully_vert_clipped_vertices.clear();
 
       if (j == xmax_idx - 1) {
-          // in the second to last column the semi_vert_clipped_vertices, ie
-          // the remaining clipped vertices are fully clipped (being left to the last col)
+          // in last column the semi_vert_clipped_vertices, ie
+          // the remaining clipped vertices are fully clipped 
           cur_hori_clipped_vertices = semi_vert_clipped_vertices;
       }
       else {
@@ -199,10 +191,10 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
           Point p2_hori(x_j, y_i);
 
           if (i == ymin_idx) {
+            // in the lowest row the semi_hori_clipped_vertices, ie
+            // the remaining clipped vertices are fully clipped (being up to the last row)
 
               if (semi_hori_clipped_vertices.size()) {
-                  // in the second to last row the semi_hori_clipped_vertices, ie
-                  // the remaining clipped vertices are fully clipped (being up to the last row)
                   std::vector<std::vector<const Point*>> semi_hori_clipped_vertices_vec = {semi_hori_clipped_vertices};
                   BinaryCellCode cell_code =
                       encode(semi_hori_clipped_vertices_vec, p1_hori, p2_hori);
