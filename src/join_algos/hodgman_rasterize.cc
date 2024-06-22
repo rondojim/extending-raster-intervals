@@ -91,7 +91,7 @@ bool RasterGrid::hodgman_clip(const std::vector<const Point *> &vertices,
     // if the points are on different sides wrt to the p1-p2 line or at least
     // one of them is on the line
     if (i_pos_sigh * nxt_i_pos_sigh <= 0) {
-      p_inter = p_intersect(p1, p2, *p_i, *p_nxt_i);
+      p_inter = p_intersect(p1, p2, *p_i, *p_nxt_i, prec_epsilon);
       if (p_inter == nullptr) {
         std::cerr << "Nan intersection\n";
         return false;

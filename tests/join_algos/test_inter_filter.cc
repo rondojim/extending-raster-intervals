@@ -64,33 +64,6 @@ bool test_polygon_area(double orig_poly_area,
   return false;
 }
 
-void print_test_error_info(Polygon polygon, RasterGrid grid)
-{
-   // print_vec(polygon.vertices);
-    std::cout << std::endl;
-
-    Point min_corner = polygon.minCorner;
-    Point max_corner = polygon.maxCorner;
-    std::cout << "with mbr: min_corner: (" << min_corner.x << ", " << min_corner.y << "), (" << max_corner.x << ", " << max_corner.y << ")\n\n";
-    std::cout << "X partition:\n";
-    for (double x = grid.min_corner.x; is_less_or_equal(x, grid.max_corner.x); x += grid.step)
-    {
-        std::cout << x << "\t";
-    }
-
-  std::cout << std::endl;
-  std::cout << "Y partition:\n";
-  for (double y = grid.min_corner.y; is_less_or_equal(y, grid.max_corner.y);
-       y += grid.step) {
-    std::cout << y << "\t";
-  }
-  std::cout << std::endl;
-  std::cout << "grid mbr:(g_xmin, g_ymin), (g_xmax, g_ymax), step: ("
-            << grid.min_corner.x << ", " << grid.min_corner.y << "), ("
-            << grid.max_corner.x << ", " << grid.max_corner.y << "), "
-            << grid.step << "\n";
-}
-
 static void get_preprocessed_polygons(std::vector<Polygon> &polygons,
                                       const std::string &f_name,
                                       Point &gridMinCorner,
@@ -105,12 +78,11 @@ static void get_preprocessed_polygons(std::vector<Polygon> &polygons,
 }
 
 int test_rasterize_polygons(
-    unsigned int N, std::string f_name, std::vector<RasterPolygonInfo>& i_j_to_rpoly_info, std::string info_file_name = "", std::string err_poly_f_name="") {
+    unsigned int N, std::string f_name, std::vector<RasterPolygonInfo>& i_j_to_rpoly_info, std::string info_file_name = "", std::string err_poly_f_name="", bool stop_on_error=false) {
 
   std::vector<Polygon> polygons;
   Point gridMinCorner, gridMaxCorner;
   get_preprocessed_polygons(polygons, f_name, gridMinCorner, gridMaxCorner, -1);
-  std::cout << polygons.size();
 
   size_t total_tests = polygons.size();
   std::cout << "Total tests: " << total_tests << std::endl;
@@ -141,8 +113,8 @@ int test_rasterize_polygons(
 
     int weiler_success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info);
 
-    grid.save_poly_raster("poly_raster.txt", polygon, i_j_to_rcell_info);
-    save_clipped_vertices_cell_type("clipped_vertices_cell_type.txt", i_j_to_rcell_info);
+    // grid.save_poly_raster("poly_raster.txt", polygon, i_j_to_rcell_info);
+    // save_clipped_vertices_cell_type("clipped_vertices_cell_type.txt", i_j_to_rcell_info);
     // print_test_error_info(polygon, grid);
 
     if (weiler_success != 1) {
@@ -150,7 +122,9 @@ int test_rasterize_polygons(
         error_polygons.push_back(polygon);
         std::cout << "Failed at idx " << i << " polygon with total vertices " << polygons[i].vertices.size() << std::endl;
         std::cerr << "Error in polygon rasterization\n";
-        break;
+        if (stop_on_error){
+          break;
+        }
     }
     else {
 
@@ -170,7 +144,9 @@ int test_rasterize_polygons(
             std::cout << " Different original polygon and clipped polygon areas\n";
             success = 1;
             error_polygons.push_back(polygon);
-            break;
+            if (stop_on_error){
+              break;
+            }
         }
 
         i_j_to_rpoly_info.emplace_back(polygon.polygon_id, i_j_to_rcell_info);
@@ -192,16 +168,16 @@ int test_rasterize_polygons(
       save_polygons_to_csv(error_polygons, err_poly_f_name.c_str());
   }
 
-  grid.save_polygons_grid("polygons_grid.txt", polygons, i_j_to_rpoly_info);
+  // grid.save_polygons_grid("polygons_grid.txt", polygons, i_j_to_rpoly_info);
   
   return success;
 }
 
 int main() {
-  unsigned int N = 5;
+  unsigned int N = 12;
   // std::string f_name("datasets/test.csv");
-  std::string f_name("datasets/special_cases.csv");
-  // // std::string f_name("../../datasets/T1.csv");
+  // std::string f_name("datasets/special_cases.csv");
+  std::string f_name("datasets/T2.csv");
   // std::string f_name("rhs_p.csv");
 
   std::vector<RasterPolygonInfo> i_j_to_rpoly_info;

@@ -107,6 +107,8 @@ struct RasterPolygonInfo {
 
 struct RasterGrid {
 private:
+  double prec_epsilon;
+  double clipped_cell_area_tol = 1e-5;
   // Calculate the smallest number greater than or equal to k in a
   // sequence that starts at xmin ends to xmax and increments by step
   double min_above_or_equal_k(double xmin, double xmax, double k);
@@ -119,9 +121,15 @@ private:
   // that starts at xmin and increments by step
   unsigned int sequence_idx(double x, double xmin);
 
+  // of x < 0 return -1
+  // if x > 0 return 1
+  // else return 0
+  int get_double_sigh(double x);
+
+
   // returns true if k is part of the sequence start from xmin
   // to xmax with the step of the grid
-  int k_belongs_in_sequence(double xmin, double xmax, double k, double epsilon = 1e-6);
+  int k_belongs_in_sequence(double xmin, double xmax, double k);
 
   // i_pos, nxt_i_pos describe the side of a point and each next: 
   // wrt to a clipping segment: < 0 on the left, > 0 on the right else on
@@ -249,7 +257,7 @@ public:
   // and expand the smallest side for the corners
   // of the grid to form a square. Cell side
   // of the grid is grid_side/2^n_
-  RasterGrid(double n_, Point min_corner_, Point max_corner_);
+  RasterGrid(double n_, Point min_corner_, Point max_corner_, double prec_epsilon_ = 1e-10);
 
   /*
   rasterize the polygon and save result for each cell 
@@ -328,10 +336,9 @@ void join_poly_cell_types(std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
                         std::set<std::pair<int, int>> &result,
                         std::set<std::pair<int, int>> &indecisive);
 
-int get_double_sigh(double x, double epsilon = 1e-24);
-bool are_equal(double a, double b, double epsilon = 1e-20);
-bool is_greater_or_equal(double a, double b, double epsilon = 1e-20);
-bool is_less_or_equal(double a, double b, double epsilon = 1e-20);
+bool are_equal(double a, double b, double epsilon);
+bool is_greater_or_equal(double a, double b, double epsilon);
+bool is_less_or_equal(double a, double b, double epsilon);
 
 
 // write vertices in output_file in given mode
@@ -397,5 +404,6 @@ void save_clipped_vertices_cell_type(const char *output_file,
                                        RasterCellInfo> &i_j_to_rcell_info,
                         const char *mode = "w");
 
+void print_test_error_info(Polygon polygon, RasterGrid grid);
 
 #endif
