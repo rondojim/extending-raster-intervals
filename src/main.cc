@@ -53,7 +53,7 @@ void find_interesctions(
   Point gridMinCorner, gridMaxCorner;
 
   get_preprocessed_polygons(lhs_polygons, rhs_polygons, lhs_f_name, rhs_f_name,
-                            gridMinCorner, gridMaxCorner, -1);
+                            gridMinCorner, gridMaxCorner);
 
   std::vector<Polygon> lhs_polygons_copy = lhs_polygons;
   std::vector<Polygon> rhs_polygons_copy = rhs_polygons;
@@ -68,16 +68,15 @@ void find_interesctions(
   std::vector<RasterPolygonInfo> lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info;
 
   std::set<int> null_cell_code_poly_idxs, error_poly_idxs;
-  if (!rasterize_polygons(grid, final_result.first, final_result.second,
-                          lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info,
-                          null_cell_code_poly_idxs, error_poly_idxs,
-                          "bin_error.txt", false)) {
+  if (rasterize_polygons(grid, final_result.first, final_result.second,
+                         lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info,
+                         null_cell_code_poly_idxs, error_poly_idxs,
+                         "bin_error.txt", false)) {
     printf("Error in rasterization\n");
-    return;
   }
 
   printf("Ratio of wrong polygons: %f\n",
-         (double)null_cell_code_poly_idxs.size() /
+         (double)(null_cell_code_poly_idxs.size() + error_poly_idxs.size()) /
              (final_result.first.size() + final_result.second.size()));
 
   printf("Rasterization done\n");
@@ -107,6 +106,10 @@ void find_interesctions(
   ri_join_algo(lhs_serialized_polygons, rhs_serialized_polygons, result,
                indecisive);
 
+  printf("Indecisive ratio: %f\n",
+         (double)indecisive.size() /
+             (final_result.first.size() * final_result.second.size()));
+
   printf("Ended RI join\n");
   // check indecisive
   for (auto &r : indecisive) {
@@ -132,9 +135,18 @@ void find_interesctions(
         null_cell_code_poly_idxs.end()) {
       continue;
     }
+    // check if id in error_poly_idxs
+    if (error_poly_idxs.find(final_result.first[i].polygon_id) !=
+        error_poly_idxs.end()) {
+      continue;
+    }
     for (int j = 0; j < final_result.second.size(); j++) {
       if (null_cell_code_poly_idxs.find(final_result.first[j].polygon_id) !=
           null_cell_code_poly_idxs.end()) {
+        continue;
+      }
+      if (error_poly_idxs.find(final_result.first[j].polygon_id) !=
+          error_poly_idxs.end()) {
         continue;
       }
       Polygon lhs_p = lhs_polygons_copy[final_result.first[i].polygon_id - 1];
@@ -144,7 +156,13 @@ void find_interesctions(
         std::pair<int, int> p = {final_result.first[i].polygon_id,
                                  final_result.second[j].polygon_id};
         if (result_set.find(p) == result_set.end()) {
-          printf("ERRORRR\n");
+          printf("ERROR ids: %d %d\n", final_result.first[i].polygon_id,
+                 final_result.second[j].polygon_id);
+          std::vector<Polygon> lhs_p_vec = {final_result.first[i]};
+          std::vector<Polygon> rhs_p_vec = {final_result.second[j]};
+          save_polygons_to_csv(lhs_p_vec, "../lhs_p.csv");
+          save_polygons_to_csv(rhs_p_vec, "../rhs_p.csv");
+          exit(0);
         }
       }
     }

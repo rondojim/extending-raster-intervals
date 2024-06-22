@@ -20,13 +20,16 @@ file(GLOB_RECURSE SOURCE_FILES
     "src/mbr_algos/*.cc"
 )
 
+# Find Threads package
+find_package(Threads REQUIRED)
+
 # Main executable
 add_executable(main_executable src/main.cc ${SOURCE_FILES})
-target_link_libraries(main_executable ${Boost_LIBRARIES})
+target_link_libraries(main_executable ${Boost_LIBRARIES} Threads::Threads pthread)
 
 # Hilbert executable
 add_executable(hilbert_executable src/produce_hilbert.cc ${SOURCE_FILES})
-target_link_libraries(hilbert_executable ${Boost_LIBRARIES})
+target_link_libraries(hilbert_executable ${Boost_LIBRARIES} Threads::Threads pthread)
 
 # Tests
 set(TEST_FILES
@@ -42,7 +45,7 @@ set(TEST_FILES
 foreach(TEST_FILE ${TEST_FILES})
     get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
     add_executable(${TEST_NAME} ${TEST_FILE} ${SOURCE_FILES})
-    target_link_libraries(${TEST_NAME} ${Boost_LIBRARIES})
+    target_link_libraries(${TEST_NAME} ${Boost_LIBRARIES} Threads::Threads pthread)
 endforeach()
 
 # Enable testing

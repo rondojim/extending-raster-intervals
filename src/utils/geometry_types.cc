@@ -1,12 +1,12 @@
 #include "../../include/utils/geometry_types.h"
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
 #include <sstream>
+#include <string>
+#include <vector>
 
 Point::Point(double x_, double y_) : x(x_), y(y_) {}
 
@@ -68,7 +68,6 @@ void Polygon::print_() {
   std::cout << std::endl;
 }
 
-
 std::string Polygon::to_wkt() {
     std::ostringstream oss;
     // Set fixed format and precision for output
@@ -117,8 +116,8 @@ void save_polygons_to_csv(std::vector<Polygon>& polygons, const char* output_fil
         file << polygon.to_wkt() << "\n";
     }
 
-    file.close();
-    std::cout << "Polygons saved to " << output_file << std::endl;
+  file.close();
+  std::cout << "Polygons saved to " << output_file << std::endl;
 }
 
 double cross_product(const Point &p1, const Point &p2, const Point &p3) {
@@ -177,18 +176,18 @@ Point *p_intersect(const Point &p1, const Point &p2, const Point &p3,
 
 // shoelace algo
 double polygon_area(const std::vector<const Point *> &points) {
-    double area = 0.0;
-    int n = points.size();
+  double area = 0.0;
+  int n = points.size();
 
-    for (int i = 0; i < n; i++) {
-        int j = (i + 1) % n;
-        area += points[i]->x * points[j]->y;
-        area -= points[j]->x * points[i]->y;
-    }
+  for (int i = 0; i < n; i++) {
+    int j = (i + 1) % n;
+    area += points[i]->x * points[j]->y;
+    area -= points[j]->x * points[i]->y;
+  }
 
-    // to handle any given polygon order
-    area = std::abs(area) / 2.0;
-    return area;
+  // to handle any given polygon order
+  area = std::abs(area) / 2.0;
+  return area;
 }
 
 int orientation(const Point &p, const Point &q, const Point &r) {
@@ -252,7 +251,7 @@ bool Polygon::point_inside(const Point &p) const {
 
 bool Polygon::intersects(const Polygon &poly2) const {
   for (size_t i = 0; i < vertices.size(); ++i) {
-    for (size_t j = 0; j < vertices.size(); ++j) {
+    for (size_t j = 0; j < poly2.vertices.size(); ++j) {
       size_t next_i = (i + 1) % vertices.size();
       size_t next_j = (j + 1) % poly2.vertices.size();
       if (doIntersect(*vertices[i], *vertices[next_i], *poly2.vertices[j],
@@ -295,12 +294,12 @@ void print_vec(const std::vector<const Point *> &vec) {
   std::cout << std::endl;
 }
 
-unsigned int checkParallelism(const Point& p1, const Point& p2) {
-    if (p1.y == p2.y) {
-        return 1;
-    } else if (p1.x == p2.x) {
-        return 2;
-    } else {
-        return 0;
-    }
+unsigned int checkParallelism(const Point &p1, const Point &p2) {
+  if (p1.y == p2.y) {
+    return 1;
+  } else if (p1.x == p2.x) {
+    return 2;
+  } else {
+    return 0;
+  }
 }
