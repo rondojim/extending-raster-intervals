@@ -69,32 +69,6 @@ bool test_polygon_area(
   return false;
 }
 
-void print_test_error_info(Polygon polygon, RasterGrid grid) {
-  print_vec(polygon.vertices);
-  std::cout << std::endl;
-
-  Point min_corner = polygon.minCorner;
-  Point max_corner = polygon.maxCorner;
-  std::cout << "with mbr: min_corner: (" << min_corner.x << ", " << min_corner.y
-            << "), (" << max_corner.x << ", " << max_corner.y << ")\n\n";
-  std::cout << "X partition:\n";
-  for (double x = grid.min_corner.x; is_less_or_equal(x, grid.max_corner.x);
-       x += grid.step) {
-    std::cout << x << "\t";
-  }
-
-  std::cout << std::endl;
-  std::cout << "Y partition:\n";
-  for (double y = grid.min_corner.y; is_less_or_equal(y, grid.max_corner.y);
-       y += grid.step) {
-    std::cout << y << "\t";
-  }
-  std::cout << std::endl;
-  std::cout << "grid mbr:(g_xmin, g_ymin), (g_xmax, g_ymax), step: ("
-            << grid.min_corner.x << ", " << grid.min_corner.y << "), ("
-            << grid.max_corner.x << ", " << grid.max_corner.y << "), "
-            << grid.step << "\n";
-}
 
 int test_join(unsigned int N, std::string rhs_f_name, std::string lhs_f_name,
               std::string info_file_name = "",

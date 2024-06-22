@@ -129,7 +129,7 @@ int RasterGrid::weiler_scan_polygon(const std::vector<const Point *> &vertices,
 
       // we are sure there is interesction and
       // we find the interesction point
-      p_inter = p_intersect(p1, p2, *p_i, *p_nxt_i);
+      p_inter = p_intersect(p1, p2, *p_i, *p_nxt_i, prec_epsilon);
 
       if (nxt_i_pos_sigh != 0) {
         if (p_inter == nullptr) {

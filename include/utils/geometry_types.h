@@ -6,7 +6,6 @@
 #include <vector>
 
 struct Point {
-  static constexpr double EPSILON = 1e-7;
   double x, y;
 
   // Parameterized constructor
@@ -18,8 +17,8 @@ struct Point {
   // Copy assignment operator
   Point &operator=(const Point &other);
 
-  // Equality operator
-  bool operator==(const Point &other) const;
+  // Return true if points are equal, else false
+  bool equal_points(const Point& other, double epsilon) const;
 
   // returns point in str format
   // (x y)
@@ -43,7 +42,7 @@ struct Polygon {
   // x0 y0
   // x1 y1
   // xn yn
-  void save_poly(const char *output_file, const char *mode = "w");
+  void save_poly(const char *output_file, const char *mode = "w", bool append_poly=false);
 
   // prints the vertices of the polygon
   void print_();
@@ -72,25 +71,25 @@ return The cross product of vectors p1p2 and p1p3. */
 double cross_product(const Point &p1, const Point &p2, const Point &p3);
 
 // returns true of p1, p2, p3 are collinear, else false
-bool are_collinear(const Point &p1, const Point &p2, const Point &p3);
+bool are_collinear(const Point &p1, const Point &p2, const Point &p3, double epsilon);
 
 // calculates the x-coordinate where two lines, defined by
 // the points (p1, p2) and (p3, p4), intersect. If the lines are parallel
 // or collinear, the function returns `NaN` to indicate no valid intersection.
 double x_intersect_(const Point &p1, const Point &p2, const Point &p3,
-                    const Point &p4);
+                    const Point &p4, double epsilon);
 
 // calculates the y-coordinate where two lines, defined by
 // the points (p1, p2) and (p3, p4), intersect. If the lines are parallel
 // or collinear, the function returns `NaN` to indicate no valid intersection.
 double y_intersect_(const Point &p1, const Point &p2, const Point &p3,
-                    const Point &p4);
+                    const Point &p4, double epsilon);
 
 // calculates the point where two lines, defined by
 // the points (p1, p2) and (p3, p4), intersect. If the lines are parallel
 // or collinear, the function returns nullptr to indicate no valid intersection.
 Point *p_intersect(const Point &p1, const Point &p2, const Point &p3,
-                   const Point &p4);
+                   const Point &p4, double epsilon = 1e-10);
 
 // Function to save a list of polygons to a CSV file
 // in wkt

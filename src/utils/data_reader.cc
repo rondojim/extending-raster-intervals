@@ -33,7 +33,7 @@ std::vector<Polygon> read_data_find_MBR(const std::string &filename,
 
   int cnt = 0;
   std::string line;
-
+  
   while (std::getline(file, line) && n--) {
 
     Polygon polygon;

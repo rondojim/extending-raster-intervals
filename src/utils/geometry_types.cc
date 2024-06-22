@@ -22,9 +22,9 @@ Point &Point::operator=(const Point &other) {
   return *this;
 }
 
-// Equality operator
-bool Point::operator==(const Point &other) const {
-  return (std::abs(x - other.x) < EPSILON && std::abs(y - other.y) < EPSILON);
+
+bool Point::equal_points(const Point& other, double epsilon) const {
+  return (std::abs(x - other.x) < epsilon && std::abs(y - other.y) < epsilon);
 }
 
 std::string Point::to_str() const {
@@ -52,10 +52,13 @@ void Polygon::findMBR() {
   }
 }
 
-void Polygon::save_poly(const char *output_file, const char *mode) {
+void Polygon::save_poly(const char *output_file, const char *mode, bool append_poly) {
   FILE *fp = fopen(output_file, mode);
   for (int i = 0; i < vertices.size(); ++i) {
     fprintf(fp, "%lf %lf\n", vertices[i]->x, vertices[i]->y);
+  }
+  if (append_poly) {
+    fprintf(fp, "POLYGON\n");
   }
   fclose(fp);
 }
@@ -125,18 +128,16 @@ double cross_product(const Point &p1, const Point &p2, const Point &p3) {
   return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
 }
 
-bool are_collinear(const Point &p1, const Point &p2, const Point &p3) {
-  return std::abs(cross_product(p1, p2, p3)) <
-         1e-24; // Consider floating-point precision issues
+bool are_collinear(const Point &p1, const Point &p2, const Point &p3, double epsilon) {
+  return std::abs(cross_product(p1, p2, p3)) < epsilon; // Consider floating-point precision issues
 }
 
 double x_intersect_(const Point &p1, const Point &p2, const Point &p3,
-                    const Point &p4) {
-  const double EPSILON = 1e-24;
+                    const Point &p4, double epsilon) {
   double num = (p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) -
                (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x);
   double den = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
-  if (std::fabs(den) < EPSILON) {
+  if (std::fabs(den) < epsilon) {
     std::cerr
         << "x_intersect_: Lines are parallel or collinear; no intersection.\n";
     std::cout << "new\n";
@@ -149,12 +150,11 @@ double x_intersect_(const Point &p1, const Point &p2, const Point &p3,
 }
 
 double y_intersect_(const Point &p1, const Point &p2, const Point &p3,
-                    const Point &p4) {
-  const double EPSILON = 1e-24;
+                    const Point &p4, double epsilon) {
   double num = (p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) -
                (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x);
   double den = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
-  if (std::fabs(den) < EPSILON) {
+  if (std::fabs(den) < epsilon) {
     std::cerr
         << "y_intersect_: Lines are parallel or collinear; no intersection.\n";
     return std::numeric_limits<double>::quiet_NaN();
@@ -163,9 +163,9 @@ double y_intersect_(const Point &p1, const Point &p2, const Point &p3,
 }
 
 Point *p_intersect(const Point &p1, const Point &p2, const Point &p3,
-                   const Point &p4) {
-  double x_inter = x_intersect_(p1, p2, p3, p4);
-  double y_inter = y_intersect_(p1, p2, p3, p4);
+                   const Point &p4, double epsilon) {
+  double x_inter = x_intersect_(p1, p2, p3, p4, epsilon);
+  double y_inter = y_intersect_(p1, p2, p3, p4, epsilon);
   if (x_inter == std::numeric_limits<double>::quiet_NaN() ||
       y_inter == std::numeric_limits<double>::quiet_NaN()) {
     std::cerr << "Nan intersection\n";
