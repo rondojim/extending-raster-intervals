@@ -387,7 +387,7 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
                         std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
                         std::set<int> &null_cell_code_poly_idxs,
-                        std::set<int> &error_poly_idxs) {
+                        std::set<int> &error_poly_idxs, int algo) {
 
   progressbar bar(lhs_polygons.size() + rhs_polygons.size());
 
@@ -395,7 +395,16 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
   for (Polygon &polygon : lhs_polygons) {
     std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
         i_j_to_rcell_info;
-    int success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info);
+    
+
+    int success; 
+    if (algo == 0) {
+      success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info);
+    }
+    else {
+      success = grid.hodgman_rasterize_poly(polygon, i_j_to_rcell_info);
+    }
+    
     if (!success) {
       error_poly_idxs.insert(polygon.polygon_id);
       error = true;
@@ -413,7 +422,14 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
     std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
         i_j_to_rcell_info;
 
-    int success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info);
+    int success; 
+    if (algo == 0) {
+      success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info);
+    }
+    else {
+      success = grid.hodgman_rasterize_poly(polygon, i_j_to_rcell_info);
+    }
+    
     if (!success) {
       error_poly_idxs.insert(polygon.polygon_id);
       error = true;

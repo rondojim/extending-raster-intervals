@@ -77,6 +77,8 @@ static void get_preprocessed_polygons(std::vector<Polygon> &polygons,
   gridMaxCorner = Point(MaxCorner.x, MaxCorner.y);
 }
 
+// test for each polygon whether the resulting clipping area is same as the initial 
+// area of the polygon by summing the are of each clipping part of all cells
 int test_rasterize_polygons(unsigned int N, std::string f_name,
                             std::vector<RasterPolygonInfo> &i_j_to_rpoly_info,
                             std::string info_file_name = "",
@@ -94,8 +96,6 @@ int test_rasterize_polygons(unsigned int N, std::string f_name,
   // if the sum of the clipped polygon area is equal
   std::vector<double> polygons_area;
   for (int i = 0; i < polygons.size(); i++) {
-    std::cout << "poly mbr: " << polygons[i].minCorner.to_str() << " - "
-              << polygons[i].maxCorner.to_str() << std::endl;
     polygons_area.push_back(polygon_area(polygons[i].vertices));
   }
 
@@ -183,10 +183,7 @@ int test_rasterize_polygons(unsigned int N, std::string f_name,
 
 int main() {
   unsigned int N = 2;
-  std::string f_name("../datasets/test.csv");
-  // std::string f_name("../datasets/special_cases.csv");
-  // std::string f_name("datasets/T2.csv");
-  // std::string f_name("rhs_p.csv");
+  std::string f_name("../datasets/T1.csv");
 
   std::vector<RasterPolygonInfo> i_j_to_rpoly_info;
   int success = test_rasterize_polygons(N, f_name, i_j_to_rpoly_info, "",

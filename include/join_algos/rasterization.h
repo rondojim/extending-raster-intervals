@@ -329,12 +329,15 @@ public:
 // rasterize the lhs_polygons, rhs_polygons and save their
 // raster representation in the lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info
 // returns true if at least one error occured, else false
+// you can use either Hodgman or Weiler Atherton clipping algorithm 
+// algo 0: for Weiler Atherton clipping algorithm used by default
+// algo 1: for Hodgman clipping algorithm
 bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::vector<Polygon> &rhs_polygons,
                         std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
                         std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
                         std::set<int> &null_cell_code_poly_idxs,
-                        std::set<int> &error_poly_idxs);
+                        std::set<int> &error_poly_idxs, int algo=0);
 
 // we join all pair of lygons between lhs_i_j_to_rpoly_info
 // and rhs_i_j_to_rpoly_info to insert the interescting
