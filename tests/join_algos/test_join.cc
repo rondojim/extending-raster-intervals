@@ -77,8 +77,9 @@ int test_join(unsigned int N, std::string rhs_f_name, std::string lhs_f_name,
   std::vector<Polygon> lhs_polygons;
   std::vector<Polygon> rhs_polygons;
   Point gridMinCorner, gridMaxCorner;
+  int n = -1;
   get_preprocessed_polygons(lhs_polygons, rhs_polygons, lhs_f_name, rhs_f_name,
-                            gridMinCorner, gridMaxCorner);
+                            gridMinCorner, gridMaxCorner, n);
 
   //   lhs_polygons[0].save_poly("lhs.txt");
   //   rhs_polygons[0].save_poly("rhs.txt");

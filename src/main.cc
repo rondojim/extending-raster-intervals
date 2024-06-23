@@ -8,7 +8,7 @@ int main() {
   // std::string rhs_f_name("../datasets/O6AF.txt");
   std::pair<std::vector<Polygon>, std::vector<Polygon>> intersections;
 
-  find_interesctions(N, lhs_f_name, rhs_f_name, intersections);
+  find_interesctions(N, lhs_f_name, rhs_f_name, intersections, -1);
 
   return 0;
 }

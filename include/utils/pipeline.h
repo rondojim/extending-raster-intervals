@@ -11,8 +11,9 @@ void get_preprocessed_polygons(std::vector<Polygon> &lhs,
                                const std::string &filename_lhs,
                                const std::string &filename_rhs,
                                Point &gridMinCorner, Point &gridMaxCorner,
-                               int n = -1);
+                               int n);
 
 void find_interesctions(
     unsigned int N, std::string lhs_f_name, std::string rhs_f_name,
-    std::pair<std::vector<Polygon>, std::vector<Polygon>> &intersections);
+    std::pair<std::vector<Polygon>, std::vector<Polygon>> &intersections,
+    int n = -1);

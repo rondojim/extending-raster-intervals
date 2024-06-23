@@ -29,16 +29,14 @@ void get_preprocessed_polygons(std::vector<Polygon> &lhs,
                                Point &gridMinCorner, Point &gridMaxCorner,
                                int n) {
   Point lhsMinCorner, lhsMaxCorner, rhsMinCorner, rhsMaxCorner;
+
   lhs = read_data_find_MBR(filename_lhs, lhsMinCorner, lhsMaxCorner, n);
-  printf("Read first set\n");
 
   id_polygons(lhs, true);
 
   rhs = read_data_find_MBR(filename_rhs, rhsMinCorner, rhsMaxCorner, n);
 
   id_polygons(rhs, false);
-
-  printf("Read second set\n");
 
   gridMinCorner = {std::min(lhsMinCorner.x, rhsMinCorner.x),
                    std::min(lhsMinCorner.y, rhsMinCorner.y)};
@@ -49,36 +47,40 @@ void get_preprocessed_polygons(std::vector<Polygon> &lhs,
 
 void find_interesctions(
     unsigned int N, std::string lhs_f_name, std::string rhs_f_name,
-    std::pair<std::vector<Polygon>, std::vector<Polygon>> &intersections) {
+    std::pair<std::vector<Polygon>, std::vector<Polygon>> &intersections,
+    int n) {
+
   std::vector<Polygon> lhs_polygons;
   std::vector<Polygon> rhs_polygons;
   Point gridMinCorner, gridMaxCorner;
 
   get_preprocessed_polygons(lhs_polygons, rhs_polygons, lhs_f_name, rhs_f_name,
-                            gridMinCorner, gridMaxCorner);
+                            gridMinCorner, gridMaxCorner, n);
 
-  // std::vector<Polygon> lhs_polygons_vec = {lhs_polygons[82950 - 1]};
-  // std::vector<Polygon> rhs_polygons_vec = {rhs_polygons[75624 - 1]};
-
-  // save_polygons_to_csv(lhs_polygons_vec, "../lhs_p.csv");
-  // save_polygons_to_csv(rhs_polygons_vec, "../rhs_p.csv");
-
-  // printf("%d\n", lhs_polygons[82950 - 1].intersects(rhs_polygons[75624 -
-  // 1]));
+  int initial_total_polygons = lhs_polygons.size() + rhs_polygons.size();
+  int initial_total_vertices = 0;
+  for (auto &it : lhs_polygons) {
+    initial_total_vertices += it.vertices.size();
+  }
+  for (auto &it : rhs_polygons) {
+    initial_total_vertices += it.vertices.size();
+  }
 
   RasterGrid grid = RasterGrid(N, gridMinCorner, gridMaxCorner, 1e-7);
 
-  // // print grid corners
-  // printf("Grid corners: %lf %lf %lf %lf\n", gridMinCorner.x, gridMinCorner.y,
-  //        gridMaxCorner.x, gridMaxCorner.y);
-
-  // exit(0);
   std::vector<Polygon> lhs_polygons_copy = lhs_polygons;
   std::vector<Polygon> rhs_polygons_copy = rhs_polygons;
 
-  // run mbr combined sweep ------------------------------------------------
   std::vector<std::pair<int, int>> final_result;
+
+  // compute time take for forward scan to run
+
+  auto start = std::chrono::high_resolution_clock::now();
   forward_scan(lhs_polygons, rhs_polygons, final_result);
+  auto end = std::chrono::high_resolution_clock::now();
+
+  std::chrono::duration<double> elapsed_seconds = end - start;
+  double mbr_filter_duration = elapsed_seconds.count();
 
   std::set<int> lhs_ids;
   std::set<int> rhs_ids;
@@ -106,18 +108,23 @@ void find_interesctions(
   std::vector<RasterPolygonInfo> lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info;
 
   std::set<int> null_cell_code_poly_idxs, error_poly_idxs;
+
+  // time rasterization
+  start = std::chrono::high_resolution_clock::now();
   if (rasterize_polygons(grid, lhs_filtered, rhs_filtered,
                          lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info,
                          null_cell_code_poly_idxs, error_poly_idxs,
                          "bin_error.txt", false)) {
     printf("Error in rasterization\n");
   }
+  end = std::chrono::high_resolution_clock::now();
+
+  elapsed_seconds = end - start;
+  double rasterization_duration = elapsed_seconds.count();
 
   printf("Ratio of wrong polygons: %f\n",
          (double)(null_cell_code_poly_idxs.size() + error_poly_idxs.size()) /
              (lhs_filtered.size() + rhs_filtered.size()));
-
-  printf("Rasterization done\n");
 
   std::vector<SerializedPolygon> lhs_serialized_polygons;
   std::vector<SerializedPolygon> rhs_serialized_polygons;
@@ -132,10 +139,15 @@ void find_interesctions(
   std::string hilbert_map_f_name = base_path + std::to_string(N) + ".txt";
 
   loadMapFromFile(hilbert_map, hilbert_map_f_name);
-  printf("Hilbert map loaded\n");
+
+  // time serialization
+  start = std::chrono::high_resolution_clock::now();
   serialize_polygons(lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info, hilbert_map,
                      lhs_serialized_polygons, rhs_serialized_polygons);
-  printf("Serialization done\n");
+  end = std::chrono::high_resolution_clock::now();
+
+  elapsed_seconds = end - start;
+  double serialization_duration = elapsed_seconds.count();
 
   std::vector<std::pair<int, int>> final_filtered;
   // for each pair in final_result check if they are in null_cell_code_poly_idxs
@@ -169,30 +181,24 @@ void find_interesctions(
   std::set<std::pair<int, int>> result;
   std::set<std::pair<int, int>> indecisive;
 
-  printf("Starting RI join\n");
+  // time ri join
+  start = std::chrono::high_resolution_clock::now();
   ri_join_algo(lhs_serialized_polygons, rhs_serialized_polygons, lhs_id_to_idx,
                rhs_id_to_idx, final_filtered, result, indecisive);
+  end = std::chrono::high_resolution_clock::now();
 
-  // for each pair in result check if they really intersect
-  int total_errors = 0;
-  for (auto &r : result) {
-    Polygon lhs_p = lhs_polygons_copy[r.first - 1];
-    Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
+  elapsed_seconds = end - start;
+  double ri_join_duration = elapsed_seconds.count();
 
-    if (!lhs_p.intersects(rhs_p)) {
-      printf("ERROR ids: %d %d\n", r.first, r.second);
-      std::vector<Polygon> lhs_p_vec = {lhs_p};
-      std::vector<Polygon> rhs_p_vec = {rhs_p};
+  int true_hits = result.size();
+  double true_hits_ratio = (double)true_hits / final_filtered.size();
+  int false_hits = final_filtered.size() - true_hits - indecisive.size();
+  double false_hits_ratio = (double)false_hits / final_filtered.size();
 
-      save_polygons_to_csv(lhs_p_vec, "../lhs_p.csv");
-      save_polygons_to_csv(rhs_p_vec, "../rhs_p.csv");
-      break;
-      total_errors++;
-    }
-  }
+  double indecisive_ratio = (double)indecisive.size() / final_filtered.size();
 
-  printf("Ended RI join\n");
-  // check indecisive
+  // measure time for indecisive
+  start = std::chrono::high_resolution_clock::now();
   for (auto &r : indecisive) {
     Polygon lhs_p = lhs_polygons_copy[r.first - 1];
     Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
@@ -201,31 +207,57 @@ void find_interesctions(
       result.insert(r);
     }
   }
-  printf("Found indecisive\n");
+  end = std::chrono::high_resolution_clock::now();
 
-  printf("Indecisive ratio: %f\n",
-         (double)indecisive.size() / final_result.size());
+  elapsed_seconds = end - start;
+  double indecisive_duration = elapsed_seconds.count();
 
-  printf("False positive: %f\n", (double)total_errors / final_filtered.size());
-  // for each pair in final_filtered, if it does not belong in result, check if
-  // it intersects
-  int total_errors2 = 0;
-  for (auto &r : final_filtered) {
-    if (result.find(r) == result.end()) {
-      Polygon lhs_p = lhs_polygons_copy[r.first - 1];
-      Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
+  // print all metrics
+  printf("Total polygons: %d\n", initial_total_polygons);
+  printf("Average number of vertices: %d\n",
+         initial_total_vertices / initial_total_polygons);
+  printf("MBR filter duration: %.2f\n", mbr_filter_duration);
+  printf("Rasterization duration: %.2f\n", rasterization_duration);
+  printf("Serialization duration: %.2f\n", serialization_duration);
+  printf("RI join duration: %.2f\n", ri_join_duration);
+  printf("Refiment step duration: %.2f\n", indecisive_duration);
+  printf("True hits percentage: %.2f%\n", true_hits_ratio * 100);
+  printf("False hits percentage: %.2f%\n", false_hits_ratio * 100);
+  printf("Indecisive percentage: %.2f%\n", indecisive_ratio * 100);
 
-      if (lhs_p.intersects(rhs_p)) {
-        printf("ERROR ids: %d %d\n", r.first, r.second);
-        std::vector<Polygon> lhs_p_vec = {lhs_p};
-        std::vector<Polygon> rhs_p_vec = {rhs_p};
+  // check if true hits are correct
+  int total_errors_true_hits = 0;
+  for (auto &r : result) {
+    Polygon lhs_p = lhs_polygons_copy[r.first - 1];
+    Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
 
-        save_polygons_to_csv(lhs_p_vec, "../lhs_p2.csv");
-        save_polygons_to_csv(rhs_p_vec, "../rhs_p2.csv");
-        total_errors2++;
-      }
+    if (!lhs_p.intersects(rhs_p)) {
+      printf("Error in true hits\n");
+      total_errors_true_hits++;
     }
   }
-  printf("False negative: %f\n", (double)total_errors2 / final_filtered.size());
-  printf("Total intersections: %d\n", result.size());
+
+  // check if false hits are correct
+  int total_errors_false_hits = 0;
+  for (auto &r : final_filtered) {
+    if (result.find(r) != result.end()) {
+      continue;
+    }
+
+    Polygon lhs_p = lhs_polygons_copy[r.first - 1];
+    Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
+
+    if (lhs_p.intersects(rhs_p)) {
+      printf("Error in false hits\n");
+      total_errors_false_hits++;
+    }
+  }
+
+  // print total errors and with ratios
+  printf("Total errors in true hits: %d\n", total_errors_true_hits);
+  printf("Error in true hits ratio: %.2f%\n",
+         (double)total_errors_true_hits / true_hits * 100);
+  printf("Total errors in false hits: %d\n", total_errors_false_hits);
+  printf("Error in false hits ratio: %.2f%\n",
+         (double)total_errors_false_hits / false_hits * 100);
 }
