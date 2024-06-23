@@ -2,6 +2,7 @@
 #include "../../include/join_algos/ri_join_algo.h"
 #include "../../include/join_algos/serialize_polygon.h"
 #include "../../include/mbr_algos/combined_sweep.h"
+#include "../../include/mbr_algos/mbr_forward_scan.h"
 #include "../../include/utils/compressing.h"
 #include "../../include/utils/data_reader.h"
 #include "../../include/utils/geometry_types.h"
@@ -69,7 +70,6 @@ bool test_polygon_area(
   return false;
 }
 
-
 int test_join(unsigned int N, std::string rhs_f_name, std::string lhs_f_name,
               std::string info_file_name = "",
               std::string err_poly_f_name = "") {
@@ -103,19 +103,41 @@ int test_join(unsigned int N, std::string rhs_f_name, std::string lhs_f_name,
             << grid.min_corner.to_str() << std::endl;
 
   std::set<int> null_cell_code_poly_idxs, error_poly_idxs;
-  std::pair<std::vector<Polygon>, std::vector<Polygon>> final_result;
 
-  mbr_combined_sweep(lhs_polygons, rhs_polygons, final_result);
+  std::vector<std::pair<int, int>> final_result;
+  forward_scan(lhs_polygons, rhs_polygons, final_result);
+
+  std::set<int> lhs_ids;
+  std::set<int> rhs_ids;
+
+  for (auto &pair : final_result) {
+    lhs_ids.insert(pair.first);
+    rhs_ids.insert(pair.second);
+  }
+
+  std::vector<Polygon> lhs_filtered;
+  std::vector<Polygon> rhs_filtered;
+
+  for (auto &it : lhs_polygons) {
+    if (lhs_ids.find(it.polygon_id) != lhs_ids.end()) {
+      lhs_filtered.push_back(it);
+    }
+  }
+
+  for (auto &it : rhs_polygons) {
+    if (rhs_ids.find(it.polygon_id) != rhs_ids.end()) {
+      rhs_filtered.push_back(it);
+    }
+  }
 
   std::vector<RasterPolygonInfo> lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info;
-  if (rasterize_polygons(grid, final_result.first, final_result.second,
+
+  if (rasterize_polygons(grid, lhs_filtered, rhs_filtered,
                          lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info,
                          null_cell_code_poly_idxs, error_poly_idxs,
                          "bin_error.txt", false)) {
     printf("Error in rasterization\n");
   }
-
-  printf("Rasterization done\n");
 
   std::vector<SerializedPolygon> lhs_serialized_polygons;
   std::vector<SerializedPolygon> rhs_serialized_polygons;
@@ -135,16 +157,58 @@ int test_join(unsigned int N, std::string rhs_f_name, std::string lhs_f_name,
                      lhs_serialized_polygons, rhs_serialized_polygons);
   printf("Serialization done\n");
 
+  printf("Ratio of wrong polygons: %f\n",
+         (double)(null_cell_code_poly_idxs.size() + error_poly_idxs.size()) /
+             (lhs_filtered.size() + rhs_filtered.size()));
+
+  printf("Rasterization done\n");
+
+  // load hilbert map
+
+  loadMapFromFile(hilbert_map, hilbert_map_f_name);
+  printf("Hilbert map loaded\n");
+  serialize_polygons(lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info, hilbert_map,
+                     lhs_serialized_polygons, rhs_serialized_polygons);
+  printf("Serialization done\n");
+
+  std::vector<std::pair<int, int>> final_filtered;
+  // for each pair in final_result check if they are in null_cell_code_poly_idxs
+  // or error_poly_idxs
+  for (auto &r : final_result) {
+    if (null_cell_code_poly_idxs.find(r.first) !=
+            null_cell_code_poly_idxs.end() ||
+        error_poly_idxs.find(r.first) != error_poly_idxs.end()) {
+      continue;
+    }
+    if (null_cell_code_poly_idxs.find(r.second) !=
+            null_cell_code_poly_idxs.end() ||
+        error_poly_idxs.find(r.second) != error_poly_idxs.end()) {
+      continue;
+    }
+    final_filtered.push_back(r);
+  }
+
+  // for each serialized polygon in lhs make a map from id to index
+  std::map<int, int> lhs_id_to_idx;
+  for (int i = 0; i < lhs_serialized_polygons.size(); i++) {
+    lhs_id_to_idx[lhs_serialized_polygons[i].polygon_id] = i;
+  }
+
+  // for each serialized polygon in rhs make a map from id to index
+  std::map<int, int> rhs_id_to_idx;
+  for (int i = 0; i < rhs_serialized_polygons.size(); i++) {
+    rhs_id_to_idx[rhs_serialized_polygons[i].polygon_id] = i;
+  }
+
   std::set<std::pair<int, int>> result;
   std::set<std::pair<int, int>> indecisive;
 
   printf("Starting RI join\n");
-  ri_join_algo(lhs_serialized_polygons, rhs_serialized_polygons, result,
-               indecisive);
+  ri_join_algo(lhs_serialized_polygons, rhs_serialized_polygons, lhs_id_to_idx,
+               rhs_id_to_idx, final_filtered, result, indecisive);
 
   printf("Indecisive ratio: %f\n",
-         (double)indecisive.size() /
-             (final_result.first.size() * final_result.second.size()));
+         (double)indecisive.size() / final_result.size());
 
   printf("Ended RI join\n");
 
@@ -183,8 +247,8 @@ int test_join(unsigned int N, std::string rhs_f_name, std::string lhs_f_name,
 
 int main() {
   unsigned int N = 2;
-  std::string rhs_f_name("../../dataset_files/OSM_filtered_datasets/O5OC");
-  std::string lhs_f_name("../../dataset_files/OSM_filtered_datasets/O6OC");
+  std::string rhs_f_name("../../dataset_files/archive/T1.csv");
+  std::string lhs_f_name("../../dataset_files/archive/T2.csv");
 
   std::vector<RasterPolygonInfo> i_j_to_rpoly_info;
   int success = test_join(N, lhs_f_name, rhs_f_name, "", "error_polygons.csv");

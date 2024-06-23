@@ -77,18 +77,20 @@ bool ri_join_pair(SerializedPolygon &lhs, SerializedPolygon &rhs, int lhs_idx,
 // results
 void ri_join_algo(std::vector<SerializedPolygon> &lhs_serialized_polygons,
                   std::vector<SerializedPolygon> &rhs_serialized_polygons,
+                  std::map<int, int> &lhs_id_to_idx,
+                  std::map<int, int> &rhs_id_to_idx,
+                  std::vector<std::pair<int, int>> &final_result,
                   std::set<std::pair<int, int>> &result,
                   std::set<std::pair<int, int>> &indecisive) {
 
-  // Iterate through all pairs of polygons from both collections
-  for (auto &lhs_polygon : lhs_serialized_polygons) {
-    for (auto &rhs_polygon : rhs_serialized_polygons) {
-      // Check if the current pair of polygons overlap
-      if (ri_join_pair(lhs_polygon, rhs_polygon, lhs_polygon.polygon_id,
-                       rhs_polygon.polygon_id, indecisive)) {
-        // If they overlap, add the pair to the result vector
-        result.insert({lhs_polygon.polygon_id, rhs_polygon.polygon_id});
-      }
+  // iterate thourgh final result
+  for (auto &r : final_result) {
+    // Check if the current pair of polygons overlap
+    if (ri_join_pair(lhs_serialized_polygons[lhs_id_to_idx[r.first]],
+                     rhs_serialized_polygons[rhs_id_to_idx[r.second]], r.first,
+                     r.second, indecisive)) {
+      // If they overlap, add the pair to the result vector
+      result.insert(r);
     }
   }
 }
