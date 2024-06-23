@@ -17,17 +17,11 @@
 bool ri_join_pair(SerializedPolygon &lhs, SerializedPolygon &rhs, int lhs_idx,
                   int rhs_idx, std::set<std::pair<int, int>> &indecisive);
 
-// Function to perform a Raster Interval (RI) join on collections of serialized
-// polygons
-// @param lhs_serialized_polygons: Vector of serialized polygons from the
-// left-hand side collection
-// @param rhs_serialized_polygons: Vector of serialized polygons from the
-// right-hand side collection
-// @param result: Vector to store pairs of indices of intersecting polygons
-// @param indecisive: Vector to store pairs of indices that require further
-// processing
 void ri_join_algo(std::vector<SerializedPolygon> &lhs_serialized_polygons,
                   std::vector<SerializedPolygon> &rhs_serialized_polygons,
+                  std::map<int, int> &lhs_id_to_idx,
+                  std::map<int, int> &rhs_id_to_idx,
+                  std::vector<std::pair<int, int>> &final_result,
                   std::set<std::pair<int, int>> &result,
                   std::set<std::pair<int, int>> &indecisive);
 

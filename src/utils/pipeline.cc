@@ -3,6 +3,7 @@
 #include "../../include/join_algos/ri_join_algo.h"
 #include "../../include/join_algos/serialize_polygon.h"
 #include "../../include/mbr_algos/combined_sweep.h"
+#include "../../include/mbr_algos/mbr_forward_scan.h"
 #include "../../include/utils/compressing.h"
 #include "../../include/utils/data_reader.h"
 #include "../../include/utils/geometry_types.h"
@@ -56,16 +57,16 @@ void find_interesctions(
   get_preprocessed_polygons(lhs_polygons, rhs_polygons, lhs_f_name, rhs_f_name,
                             gridMinCorner, gridMaxCorner);
 
-  std::vector<Polygon> lhs_polygons_vec = {lhs_polygons[82950 - 1]};
-  std::vector<Polygon> rhs_polygons_vec = {rhs_polygons[75624 - 1]};
+  // std::vector<Polygon> lhs_polygons_vec = {lhs_polygons[82950 - 1]};
+  // std::vector<Polygon> rhs_polygons_vec = {rhs_polygons[75624 - 1]};
 
-  save_polygons_to_csv(lhs_polygons_vec, "../lhs_p.csv");
-  save_polygons_to_csv(rhs_polygons_vec, "../rhs_p.csv");
+  // save_polygons_to_csv(lhs_polygons_vec, "../lhs_p.csv");
+  // save_polygons_to_csv(rhs_polygons_vec, "../rhs_p.csv");
 
   // printf("%d\n", lhs_polygons[82950 - 1].intersects(rhs_polygons[75624 -
   // 1]));
 
-  RasterGrid grid = RasterGrid(N, gridMinCorner, gridMaxCorner);
+  RasterGrid grid = RasterGrid(N, gridMinCorner, gridMaxCorner, 1e-7);
 
   // // print grid corners
   // printf("Grid corners: %lf %lf %lf %lf\n", gridMinCorner.x, gridMinCorner.y,
@@ -76,14 +77,36 @@ void find_interesctions(
   std::vector<Polygon> rhs_polygons_copy = rhs_polygons;
 
   // run mbr combined sweep ------------------------------------------------
-  std::pair<std::vector<Polygon>, std::vector<Polygon>> final_result;
-  mbr_combined_sweep(lhs_polygons, rhs_polygons, final_result);
-  printf("%d %d\n", final_result.first.size(), final_result.second.size());
+  std::vector<std::pair<int, int>> final_result;
+  forward_scan(lhs_polygons, rhs_polygons, final_result);
+
+  std::set<int> lhs_ids;
+  std::set<int> rhs_ids;
+
+  for (auto &pair : final_result) {
+    lhs_ids.insert(pair.first);
+    rhs_ids.insert(pair.second);
+  }
+
+  std::vector<Polygon> lhs_filtered;
+  std::vector<Polygon> rhs_filtered;
+
+  for (auto &it : lhs_polygons) {
+    if (lhs_ids.find(it.polygon_id) != lhs_ids.end()) {
+      lhs_filtered.push_back(it);
+    }
+  }
+
+  for (auto &it : rhs_polygons) {
+    if (rhs_ids.find(it.polygon_id) != rhs_ids.end()) {
+      rhs_filtered.push_back(it);
+    }
+  }
 
   std::vector<RasterPolygonInfo> lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info;
 
   std::set<int> null_cell_code_poly_idxs, error_poly_idxs;
-  if (rasterize_polygons(grid, final_result.first, final_result.second,
+  if (rasterize_polygons(grid, lhs_filtered, rhs_filtered,
                          lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info,
                          null_cell_code_poly_idxs, error_poly_idxs,
                          "bin_error.txt", false)) {
@@ -92,7 +115,7 @@ void find_interesctions(
 
   printf("Ratio of wrong polygons: %f\n",
          (double)(null_cell_code_poly_idxs.size() + error_poly_idxs.size()) /
-             (final_result.first.size() + final_result.second.size()));
+             (lhs_filtered.size() + rhs_filtered.size()));
 
   printf("Rasterization done\n");
 
@@ -114,16 +137,59 @@ void find_interesctions(
                      lhs_serialized_polygons, rhs_serialized_polygons);
   printf("Serialization done\n");
 
+  std::vector<std::pair<int, int>> final_filtered;
+  // for each pair in final_result check if they are in null_cell_code_poly_idxs
+  // or error_poly_idxs
+  for (auto &r : final_result) {
+    if (null_cell_code_poly_idxs.find(r.first) !=
+            null_cell_code_poly_idxs.end() ||
+        error_poly_idxs.find(r.first) != error_poly_idxs.end()) {
+      continue;
+    }
+    if (null_cell_code_poly_idxs.find(r.second) !=
+            null_cell_code_poly_idxs.end() ||
+        error_poly_idxs.find(r.second) != error_poly_idxs.end()) {
+      continue;
+    }
+    final_filtered.push_back(r);
+  }
+
+  // for each serialized polygon in lhs make a map from id to index
+  std::map<int, int> lhs_id_to_idx;
+  for (int i = 0; i < lhs_serialized_polygons.size(); i++) {
+    lhs_id_to_idx[lhs_serialized_polygons[i].polygon_id] = i;
+  }
+
+  // for each serialized polygon in rhs make a map from id to index
+  std::map<int, int> rhs_id_to_idx;
+  for (int i = 0; i < rhs_serialized_polygons.size(); i++) {
+    rhs_id_to_idx[rhs_serialized_polygons[i].polygon_id] = i;
+  }
+
   std::set<std::pair<int, int>> result;
   std::set<std::pair<int, int>> indecisive;
 
   printf("Starting RI join\n");
-  ri_join_algo(lhs_serialized_polygons, rhs_serialized_polygons, result,
-               indecisive);
+  ri_join_algo(lhs_serialized_polygons, rhs_serialized_polygons, lhs_id_to_idx,
+               rhs_id_to_idx, final_filtered, result, indecisive);
 
-  printf("Indecisive ratio: %f\n",
-         (double)indecisive.size() /
-             (final_result.first.size() * final_result.second.size()));
+  // for each pair in result check if they really intersect
+  int total_errors = 0;
+  for (auto &r : result) {
+    Polygon lhs_p = lhs_polygons_copy[r.first - 1];
+    Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
+
+    if (!lhs_p.intersects(rhs_p)) {
+      printf("ERROR ids: %d %d\n", r.first, r.second);
+      std::vector<Polygon> lhs_p_vec = {lhs_p};
+      std::vector<Polygon> rhs_p_vec = {rhs_p};
+
+      save_polygons_to_csv(lhs_p_vec, "../lhs_p.csv");
+      save_polygons_to_csv(rhs_p_vec, "../rhs_p.csv");
+      break;
+      total_errors++;
+    }
+  }
 
   printf("Ended RI join\n");
   // check indecisive
@@ -137,57 +203,29 @@ void find_interesctions(
   }
   printf("Found indecisive\n");
 
-  // create a set with the pairs that intersect
-  std::set<std::pair<int, int>> result_set;
-  for (auto &r : result) {
-    result_set.insert(r);
-  }
+  printf("Indecisive ratio: %f\n",
+         (double)indecisive.size() / final_result.size());
 
-  int count = 0;
-  int total = 0;
-  // for each pair of polygon from final_result check if they intersect
-  for (int i = 0; i < final_result.first.size(); i++) {
-    // check if id in null_cell_code_poly_idxs
-    if (null_cell_code_poly_idxs.find(final_result.first[i].polygon_id) !=
-        null_cell_code_poly_idxs.end()) {
-      continue;
-    }
-    // check if id in error_poly_idxs
-    if (error_poly_idxs.find(final_result.first[i].polygon_id) !=
-        error_poly_idxs.end()) {
-      continue;
-    }
-    for (int j = 0; j < final_result.second.size(); j++) {
-      if (null_cell_code_poly_idxs.find(final_result.first[j].polygon_id) !=
-          null_cell_code_poly_idxs.end()) {
-        continue;
-      }
-      if (error_poly_idxs.find(final_result.first[j].polygon_id) !=
-          error_poly_idxs.end()) {
-        continue;
-      }
-      total++;
-      Polygon lhs_p = lhs_polygons_copy[final_result.first[i].polygon_id - 1];
-      Polygon rhs_p = rhs_polygons_copy[-final_result.second[j].polygon_id - 1];
+  printf("False positive: %f\n", (double)total_errors / final_filtered.size());
+  // for each pair in final_filtered, if it does not belong in result, check if
+  // it intersects
+  int total_errors2 = 0;
+  for (auto &r : final_filtered) {
+    if (result.find(r) == result.end()) {
+      Polygon lhs_p = lhs_polygons_copy[r.first - 1];
+      Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
 
       if (lhs_p.intersects(rhs_p)) {
-        std::pair<int, int> p = {final_result.first[i].polygon_id,
-                                 final_result.second[j].polygon_id};
-        if (result_set.find(p) == result_set.end()) {
-          printf("ERROR ids: %d %d\n", final_result.first[i].polygon_id,
-                 final_result.second[j].polygon_id);
-          count++;
-          // std::vector<Polygon> lhs_p_vec = {final_result.first[i]};
-          // std::vector<Polygon> rhs_p_vec = {final_result.second[j]};
-          // save_polygons_to_csv(lhs_p_vec, "../lhs_p.csv");
-          // save_polygons_to_csv(rhs_p_vec, "../rhs_p.csv");
-          // exit(0);
-        }
+        printf("ERROR ids: %d %d\n", r.first, r.second);
+        std::vector<Polygon> lhs_p_vec = {lhs_p};
+        std::vector<Polygon> rhs_p_vec = {rhs_p};
+
+        save_polygons_to_csv(lhs_p_vec, "../lhs_p2.csv");
+        save_polygons_to_csv(rhs_p_vec, "../rhs_p2.csv");
+        total_errors2++;
       }
     }
   }
-  printf("Ratio of intersections algorithm did not found: %f\n",
-         (double)count / total);
-  printf("Total: %d\n", total);
-  printf("Our result: %d\n", result.size());
+  printf("False negative: %f\n", (double)total_errors2 / final_filtered.size());
+  printf("Total intersections: %d\n", result.size());
 }

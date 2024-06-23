@@ -23,9 +23,9 @@ file(GLOB_RECURSE SOURCE_FILES
 # Find Threads package
 find_package(Threads REQUIRED)
 
-# # Main executable
-# add_executable(main_executable src/main.cc ${SOURCE_FILES})
-# target_link_libraries(main_executable ${Boost_LIBRARIES} Threads::Threads pthread)
+# Main executable
+add_executable(main_executable src/main.cc ${SOURCE_FILES})
+target_link_libraries(main_executable ${Boost_LIBRARIES} Threads::Threads pthread)
 
 # # Hilbert executable
 # add_executable(hilbert_executable src/produce_hilbert.cc ${SOURCE_FILES})
