@@ -277,12 +277,6 @@ bool Polygon::intersects(const Polygon &poly2) const {
       size_t next_j = (j + 1) % poly2.vertices.size();
       if (doIntersect(*vertices[i], *vertices[next_i], *poly2.vertices[j],
                       *poly2.vertices[next_j])) {
-        // printf("Intersecting segments: (%lf, %lf) (%lf, %lf) and (%lf, %lf) "
-        //        "(%lf, %lf)\n",
-        //        vertices[i]->x, vertices[i]->y, vertices[next_i]->x,
-        //        vertices[next_i]->y, poly2.vertices[j]->x,
-        //        poly2.vertices[j]->y, poly2.vertices[next_j]->x,
-        //        poly2.vertices[next_j]->y);
         return true;
       }
     }
@@ -290,14 +284,12 @@ bool Polygon::intersects(const Polygon &poly2) const {
 
   for (const Point *vertex : vertices) {
     if (poly2.point_inside(*vertex)) {
-      // printf("Vertex of p1 inside p2: (%lf, %lf)\n", vertex->x, vertex->y);
       return true;
     }
   }
 
   for (const Point *vertex : poly2.vertices) {
     if (point_inside(*vertex)) {
-      // printf("Vertex of p2 inside p1: (%lf, %lf)\n", vertex->x, vertex->y);
       return true;
     }
   }

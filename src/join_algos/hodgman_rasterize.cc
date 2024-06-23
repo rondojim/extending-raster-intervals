@@ -47,7 +47,7 @@ void RasterGrid::hodgman_clip_segment(
     // For the fully clipped only point of intersection with edge is added
     left_vert_clipped_points.push_back(p_inter);
   }
-}  
+}
 
 bool RasterGrid::hodgman_clip(const std::vector<const Point *> &vertices,
       std::vector<const Point *> &left_vert_clipped_points,
@@ -67,7 +67,6 @@ bool RasterGrid::hodgman_clip(const std::vector<const Point *> &vertices,
 
     int i_pos_sigh = get_double_sigh(i_pos);
     int nxt_i_pos_sigh = get_double_sigh(nxt_i_pos);
-
 
     Point *p_inter = nullptr;
     // if the points are on different sides wrt to the p1-p2 line or at least
@@ -103,8 +102,8 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
       return false;
     }
 
-  // Find the corners of the grid 
-  // that enclose the polygon mbr 
+  // Find the corners of the grid
+  // that enclose the polygon mbr
   double xmin =
       max_below_or_equal_k(min_corner.x, max_corner.x, polygon.minCorner.x);
   double ymin =
@@ -126,20 +125,21 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
   int ymin_idx = sequence_idx(ymin, min_corner.y);
   int ymax_idx = sequence_idx(ymax, min_corner.y);
 
-  std::vector<const Point*> fully_vert_clipped_vertices, semi_vert_clipped_vertices, 
-      cur_vert_clipped_vertices, fully_hori_clipped_vertices, 
-      semi_hori_clipped_vertices, cur_hori_clipped_vertices; 
+  std::vector<const Point *> fully_vert_clipped_vertices,
+      semi_vert_clipped_vertices, cur_vert_clipped_vertices,
+      fully_hori_clipped_vertices, semi_hori_clipped_vertices,
+      cur_hori_clipped_vertices;
 
   std::map<std::pair<int, int>, std::vector<std::vector<const Point *>>>
       i_j_to_vertical_clipped, i_j_to_hori_clipped;
 
   cur_vert_clipped_vertices = polygon.vertices;
-  semi_vert_clipped_vertices = polygon.vertices; 
+  semi_vert_clipped_vertices = polygon.vertices;
 
   double x_j, y_i;
   for (int j = xmin_idx; j < xmax_idx; j++) {
-      x_j = min_corner.x + (j + 1) * step;
-      fully_vert_clipped_vertices.clear();
+    x_j = min_corner.x + (j + 1) * step;
+    fully_vert_clipped_vertices.clear();
 
       if (j == xmax_idx - 1) {
           // in last column the semi_vert_clipped_vertices, ie
@@ -157,23 +157,24 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
               return false;
           }
 
-          cur_vert_clipped_vertices = semi_vert_clipped_vertices;
-          cur_hori_clipped_vertices = fully_vert_clipped_vertices;
-      }
+      cur_vert_clipped_vertices = semi_vert_clipped_vertices;
+      cur_hori_clipped_vertices = fully_vert_clipped_vertices;
+    }
 
       semi_hori_clipped_vertices = cur_hori_clipped_vertices;
       
 
-      for (int i = ymax_idx - 1; i >= ymin_idx; i--) {
-          fully_hori_clipped_vertices.clear();
-          std::pair<int, int> i_j = {j, i};
-           y_i = min_corner.y + i * step;
-          Point p1_hori(x_j - step, y_i);
-          Point p2_hori(x_j, y_i);
+    for (int i = ymax_idx - 1; i >= ymin_idx; i--) {
+      fully_hori_clipped_vertices.clear();
+      std::pair<int, int> i_j = {j, i};
+      y_i = min_corner.y + i * step;
+      Point p1_hori(x_j - step, y_i);
+      Point p2_hori(x_j, y_i);
 
-          if (i == ymin_idx) {
-            // in the lowest row the semi_hori_clipped_vertices, ie
-            // the remaining clipped vertices are fully clipped (being up to the last row)
+      if (i == ymin_idx) {
+        // in the lowest row the semi_hori_clipped_vertices, ie
+        // the remaining clipped vertices are fully clipped (being up to the
+        // last row)
 
               if (semi_hori_clipped_vertices.size()) {
                   std::vector<std::vector<const Point*>> semi_hori_clipped_vertices_vec = {semi_hori_clipped_vertices};
@@ -195,7 +196,7 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
                 return false;
               }
 
-              cur_hori_clipped_vertices = semi_hori_clipped_vertices;
+        cur_hori_clipped_vertices = semi_hori_clipped_vertices;
 
               if (fully_hori_clipped_vertices.size()) {
                   std::vector<std::vector<const Point*>> fully_hori_clipped_vertices_vec = {fully_hori_clipped_vertices};
@@ -214,5 +215,5 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
       }
     }
 
-    return true;
+  return true;
 }

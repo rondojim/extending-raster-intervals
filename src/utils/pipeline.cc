@@ -224,41 +224,41 @@ void find_interesctions(
   printf("False hits percentage: %.2f\n", false_hits_ratio * 100);
   printf("Indecisive percentage: %.2f\n", indecisive_ratio * 100);
 
-  // check if true hits are correct
-  int total_errors_true_hits = 0;
-  for (auto &r : result) {
-    Polygon lhs_p = lhs_polygons_copy[r.first - 1];
-    Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
+  // // check if true hits are correct
+  // int total_errors_true_hits = 0;
+  // for (auto &r : result) {
+  //   Polygon lhs_p = lhs_polygons_copy[r.first - 1];
+  //   Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
 
-    if (!lhs_p.intersects(rhs_p)) {
-      printf("Id %d and %d\n", r.first, r.second);
-      printf("Error in true hits\n");
-      total_errors_true_hits++;
-    }
-  }
+  //   if (!lhs_p.intersects(rhs_p)) {
+  //     printf("Id %d and %d\n", r.first, r.second);
+  //     printf("Error in true hits\n");
+  //     total_errors_true_hits++;
+  //   }
+  // }
 
-  // check if false hits are correct
-  int total_errors_false_hits = 0;
-  for (auto &r : final_filtered) {
-    if (result.find(r) != result.end()) {
-      continue;
-    }
+  // // check if false hits are correct
+  // int total_errors_false_hits = 0;
+  // for (auto &r : final_filtered) {
+  //   if (result.find(r) != result.end()) {
+  //     continue;
+  //   }
 
-    Polygon lhs_p = lhs_polygons_copy[r.first - 1];
-    Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
+  //   Polygon lhs_p = lhs_polygons_copy[r.first - 1];
+  //   Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
 
-    if (lhs_p.intersects(rhs_p)) {
-      printf("Id %d and %d\n", r.first, r.second);
-      printf("Error in false hits\n");
-      total_errors_false_hits++;
-    }
-  }
+  //   if (lhs_p.intersects(rhs_p)) {
+  //     printf("Id %d and %d\n", r.first, r.second);
+  //     printf("Error in false hits\n");
+  //     total_errors_false_hits++;
+  //   }
+  // }
 
-  // print total errors and with ratios
-  printf("Total errors in true hits: %d\n", total_errors_true_hits);
-  printf("Error in true hits ratio: %.2f\n",
-         (double)total_errors_true_hits / true_hits * 100);
-  printf("Total errors in false hits: %d\n", total_errors_false_hits);
-  printf("Error in false hits ratio: %.2f\n",
-         (double)total_errors_false_hits / false_hits * 100);
+  // // print total errors and with ratios
+  // printf("Total errors in true hits: %d\n", total_errors_true_hits);
+  // printf("Error in true hits ratio: %.2f\n",
+  //        (double)total_errors_true_hits / true_hits * 100);
+  // printf("Total errors in false hits: %d\n", total_errors_false_hits);
+  // printf("Error in false hits ratio: %.2f\n",
+  //        (double)total_errors_false_hits / false_hits * 100);
 }

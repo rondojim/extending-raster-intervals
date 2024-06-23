@@ -10,8 +10,10 @@
 #include <numeric>
 #include <set>
 
-RasterGrid::RasterGrid(double n_, Point min_corner_, Point max_corner_, double prec_epsilon_)
-    : n(std::pow(2.0, n_)), min_corner(min_corner_), max_corner(max_corner_), prec_epsilon(prec_epsilon_) {
+RasterGrid::RasterGrid(double n_, Point min_corner_, Point max_corner_,
+                       double prec_epsilon_)
+    : n(std::pow(2.0, n_)), min_corner(min_corner_), max_corner(max_corner_),
+      prec_epsilon(prec_epsilon_) {
 
   double vert_size = max_corner.y - min_corner.y;
   double hor_size = max_corner.x - min_corner.x;
@@ -98,13 +100,14 @@ bool RasterGrid::set_segment_borders_types(
         &i_j_to_rcell_info) {
 
   unsigned int parallelism = checkParallelism(p1, p2);
-  int min_col_idx = -1, max_col_idx = -1, min_row_idx = -1, max_row_idx = -1; 
-  double xmin = min_corner.x, xmax = max_corner.x, ymin = min_corner.y, ymax = max_corner.y;
+  int min_col_idx = -1, max_col_idx = -1, min_row_idx = -1, max_row_idx = -1;
+  double xmin = min_corner.x, xmax = max_corner.x, ymin = min_corner.y,
+         ymax = max_corner.y;
   if (!parallelism) {
     return true;
   }
   if (parallelism == 1) {
-   
+
     // parallel to x axis
     int y_is_on_grid_row = k_belongs_in_sequence(ymin, ymax, p1.y);
     if (y_is_on_grid_row == -1) {
@@ -145,15 +148,17 @@ bool RasterGrid::set_segment_borders_types(
       // position in map are i, i+1, ..., j-1
       max_col_idx--;
 
-      if (are_equal(seg_min_x, on_grid_min_x, prec_epsilon) && min_col_idx > 0) {
-        // the max x of the line which overalaps a grid column is on a corner 
-        // include the lower column too 
+      if (are_equal(seg_min_x, on_grid_min_x, prec_epsilon) &&
+          min_col_idx > 0) {
+        // the max x of the line which overalaps a grid column is on a corner
+        // include the lower column too
         min_col_idx--;
       }
 
-      if (are_equal(seg_max_x, on_grid_max_x, prec_epsilon) && on_grid_max_x < xmax) {
-        // the min x of the line which overalaps a grid column is on a corner 
-        // include the higher column too 
+      if (are_equal(seg_max_x, on_grid_max_x, prec_epsilon) &&
+          on_grid_max_x < xmax) {
+        // the min x of the line which overalaps a grid column is on a corner
+        // include the higher column too
         max_col_idx++;
       }
 
@@ -202,9 +207,10 @@ bool RasterGrid::set_segment_borders_types(
       // position in map are i, i+1, ..., j-1
       max_row_idx--;
 
-      if (are_equal(seg_min_y, on_grid_min_y, prec_epsilon) && min_row_idx > 0) {
-        // the min y of the line which overalaps a grid row is on a corner 
-        // include the lower row too 
+      if (are_equal(seg_min_y, on_grid_min_y, prec_epsilon) &&
+          min_row_idx > 0) {
+        // the min y of the line which overalaps a grid row is on a corner
+        // include the lower row too
         min_row_idx--;
       }
 
@@ -488,24 +494,24 @@ void join_poly_cell_types(std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
   }
 }
 
-void print_poly_grid_info(Polygon polygon, RasterGrid grid)
-{
-   // print_vec(polygon.vertices);
-    std::cout << std::endl;
+void print_poly_grid_info(Polygon polygon, RasterGrid grid) {
+  // print_vec(polygon.vertices);
+  std::cout << std::endl;
 
-    Point min_corner = polygon.minCorner;
-    Point max_corner = polygon.maxCorner;
-    std::cout << "with mbr: min_corner: (" << min_corner.x << ", " << min_corner.y << "), (" << max_corner.x << ", " << max_corner.y << ")\n\n";
-    std::cout << "X partition:\n";
-    for (double x = grid.min_corner.x; is_less_or_equal(x, grid.max_corner.x, 1e-6); x += grid.step)
-    {
-        std::cout << x << "\t";
-    }
+  Point min_corner = polygon.minCorner;
+  Point max_corner = polygon.maxCorner;
+  std::cout << "with mbr: min_corner: (" << min_corner.x << ", " << min_corner.y
+            << "), (" << max_corner.x << ", " << max_corner.y << ")\n\n";
+  std::cout << "X partition:\n";
+  for (double x = grid.min_corner.x;
+       is_less_or_equal(x, grid.max_corner.x, 1e-6); x += grid.step) {
+    std::cout << x << "\t";
+  }
 
   std::cout << std::endl;
   std::cout << "Y partition:\n";
-  for (double y = grid.min_corner.y; is_less_or_equal(y, grid.max_corner.y, 1e-6);
-       y += grid.step) {
+  for (double y = grid.min_corner.y;
+       is_less_or_equal(y, grid.max_corner.y, 1e-6); y += grid.step) {
     std::cout << y << "\t";
   }
   std::cout << std::endl;
