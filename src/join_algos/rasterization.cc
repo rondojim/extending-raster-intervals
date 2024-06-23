@@ -296,7 +296,6 @@ RasterGrid::encode(std::vector<std::vector<const Point *>> &vertices_vectors,
   if (vertices_vectors.size() == 1 && is_certain_full_cell(vertices_vectors[0], p1, p2)) {
     double cell_poly_area = get_polygons_area(vertices_vectors);
     if (!are_equal(cell_poly_area, cell_area, prec_epsilon)) {
-      std::cout << "cell_poly_area: " << cell_poly_area << " != cell_area: " << cell_area << std::endl;
       return BinaryCellCode(BinaryCellCode::NULL_CODE);
     }
 

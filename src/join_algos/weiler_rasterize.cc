@@ -258,7 +258,6 @@ bool RasterGrid::weiler_clip(
         cur_polygon.clear();
 
         if (total_iters > max_iters) {
-          std::cout << "Error in weiler: max_iters == total_iters\n";
           return false;
         }
       }
