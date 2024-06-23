@@ -66,7 +66,7 @@ void find_interesctions(
     initial_total_vertices += it.vertices.size();
   }
 
-  RasterGrid grid = RasterGrid(N, gridMinCorner, gridMaxCorner, 1e-7);
+  RasterGrid grid = RasterGrid(N, gridMinCorner, gridMaxCorner, 1e-10);
 
   std::vector<Polygon> lhs_polygons_copy = lhs_polygons;
   std::vector<Polygon> rhs_polygons_copy = rhs_polygons;
@@ -113,8 +113,7 @@ void find_interesctions(
   start = std::chrono::high_resolution_clock::now();
   if (rasterize_polygons(grid, lhs_filtered, rhs_filtered,
                          lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info,
-                         null_cell_code_poly_idxs, error_poly_idxs,
-                         "bin_error.txt", false)) {
+                         null_cell_code_poly_idxs, error_poly_idxs)) {
     printf("Error in rasterization\n");
   }
   end = std::chrono::high_resolution_clock::now();

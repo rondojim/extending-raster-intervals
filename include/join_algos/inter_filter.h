@@ -25,11 +25,6 @@ struct PointInfo {
 
   PointInfo(const Point *p, Direction d, int inter_p_idx = -1)
       : point(p), dir(d), inter_point_idx(inter_p_idx) {}
-  void print_(bool line_change = true) const {
-    if (line_change) {
-      std::cout << std::endl;
-    }
-  }
 };
 
 struct InterPointInfo {
@@ -41,11 +36,6 @@ struct InterPointInfo {
   InterPointInfo(const Point *p, Direction d, int nxt_p_idx = -1,
                  bool visited_ = false)
       : inter_point(p), dir(d), nxt_point_idx(nxt_p_idx), visited{(visited_)} {}
-  void print_(bool line_change = true) const {
-    if (line_change) {
-      std::cout << std::endl;
-    }
-  }
 };
 
 struct BinaryCellCode {
@@ -72,7 +62,7 @@ struct BinaryCellCode {
   unsigned long to_ulong() const;
 
   // convert binary to char* FULL, STRONG, WEAK, NULL
-  const char *to_type(bool debug = false) const;
+  const char *to_type() const;
 
   // Equality check
   bool equals(const BinaryCellCode& other) const;
@@ -140,8 +130,7 @@ private:
   void hodgman_clip_segment(int i_pos_sigh, int nxt_i_pos_sigh, const Point *p_inter,
                     const Point *p_nxt_i,
                     std::vector<const Point *> &left_vert_clipped_points,
-                    std::vector<const Point *> &right_vert_clipped_points,
-                    bool debug);
+                    std::vector<const Point *> &right_vert_clipped_points);
 
   // Given segment, vertices should be in cw order.
   // Clip the polygon wrt the segment p1,p2 
@@ -152,7 +141,7 @@ private:
   bool hodgman_clip(const std::vector<const Point *> &vertices,
             std::vector<const Point *> &left_vert_clipped_points,
             std::vector<const Point *> &right_vert_clipped_points,
-            const Point &p1, const Point &p2, bool debug);
+            const Point &p1, const Point &p2);
 
 
   // sort indexes which enumerate the inter_pts_info together
@@ -173,8 +162,7 @@ private:
   int weiler_scan_polygon(const std::vector<const Point *> &vertices,
                           const Point &p1, const Point &p2,
                           std::vector<PointInfo> &vertices_with_info,
-                          std::vector<InterPointInfo> &inter_pts_info,
-                          bool debug);
+                          std::vector<InterPointInfo> &inter_pts_info);
 
   // walk on the polygon vertices (vertices_with_info) starting from start_idx,
   // adding points until meet exit_dir 
@@ -184,7 +172,7 @@ private:
   int walk_on_polygon_vertices(std::vector<const Point *> &polygon_to_fill,
                                std::vector<PointInfo> &vertices_with_info,
                                Direction exit_dir, int start_idx,
-                               unsigned int max_iters, bool debug = false);
+                               unsigned int max_iters);
 
   // walk on the intersection vertices (inter_pts_info) starting 
   // from start_idx, go on the direction based on step (-1/1) up 
@@ -196,8 +184,7 @@ private:
   int walk_on_inter_vertices(std::vector<const Point *> &polygon_to_fill,
                              std::vector<InterPointInfo> &inter_pts_info,
                              Direction exit_dir, int start_idx, int step,
-                             const Point **exit_point, unsigned int max_iters,
-                             bool debug = false);
+                             const Point **exit_point, unsigned int max_iters);
 
   // It clips the vertices wrt to the segment p1, p2 and 
   // the result is save in left_vertices_vectors, right_vertices_vectors
@@ -206,8 +193,7 @@ private:
   bool weiler_clip(const std::vector<const Point *> &vertices,
               std::vector<std::vector<const Point *>> &left_vertices_vectors,
               std::vector<std::vector<const Point *>> &right_vertices_vectors,
-              const Point &p1, const Point &p2, unsigned int max_iters,
-              bool debug = false);
+              const Point &p1, const Point &p2, unsigned int max_iters);
 
   // It clips each of the vertices included in vertices_vectors 
   // using the weiler_clip function 
@@ -216,7 +202,7 @@ private:
       const std::vector<std::vector<const Point *>> &vertices_vectors,
       std::vector<std::vector<const Point *>> &left_vertices_vectors,
       std::vector<std::vector<const Point *>> &right_vertices_vectors,
-      const Point &p1, const Point &p2, bool debug = false);
+      const Point &p1, const Point &p2);
 
   // for each segment in vertices we call set_segment_borders_types
   // seting weak cell types for edge cases that are saved in i_j_to_rcell_info
@@ -232,16 +218,14 @@ private:
   // if the vertices form the square with bottom corners p1,p2
   // returns true, else false 
   bool is_certain_full_cell(const std::vector<const Point *> &vertices,
-                            const Point &p1, const Point &p2,
-                            bool debug = false);
+                            const Point &p1, const Point &p2);
 
   // return the R encoding of the vertices_vectors which is
   // in the cell with the bottom corners p1,p2
   // the clipped polygon wrt to the cell area 
   BinaryCellCode
   encode(std::vector<std::vector<const Point *>> &vertices_vectors,
-         const Point &p1, const Point &p2, 
-         bool debug = false);
+         const Point &p1, const Point &p2);
 
 
 public:
@@ -277,8 +261,7 @@ public:
   */
   bool hodgman_rasterize_poly(Polygon &polygon,
                              std::map<std::pair<unsigned int, unsigned int>,
-                                      RasterCellInfo> &i_j_to_rcell_info,
-                             bool debug = false);
+                                      RasterCellInfo> &i_j_to_rcell_info);
 
   /*
   rasterize the polygon and save result for each cell 
@@ -299,8 +282,7 @@ public:
   */
   int weiler_rasterize_poly(Polygon &polygon,
                              std::map<std::pair<unsigned int, unsigned int>,
-                                      RasterCellInfo> &i_j_to_rcell_info,
-                             bool debug = false);
+                                      RasterCellInfo> &i_j_to_rcell_info);
 
   // save the rasterization of a poly in output_file in given mode
   // format:
@@ -350,8 +332,7 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
                         std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
                         std::set<int> &null_cell_code_poly_idxs,
-                        std::set<int> &error_poly_idxs,
-                        std::string err_poly_f_name="", bool debug=false);
+                        std::set<int> &error_poly_idxs);
 
 // we join all pair of lygons between lhs_i_j_to_rpoly_info 
 // and rhs_i_j_to_rpoly_info to insert the interescting 

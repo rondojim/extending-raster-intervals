@@ -140,13 +140,7 @@ double x_intersect_(const Point &p1, const Point &p2, const Point &p3,
                (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x);
   double den = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
   if (std::fabs(den) < epsilon) {
-    std::cerr
-        << "x_intersect_: Lines are parallel or collinear; no intersection.\n";
-    std::cout << "new\n";
-    std::cout << p1.x << " " << p1.y << " " << p2.x << " " << p2.y << " "
-              << p3.x << " " << p3.y << " " << p4.x << " " << p4.y << std::endl;
-    return std::numeric_limits<double>::
-        quiet_NaN(); // Return Not-A-Number to indicate no valid intersection
+    return std::numeric_limits<double>::quiet_NaN(); // Return Not-A-Number to indicate no valid intersection
   }
   return num / den;
 }

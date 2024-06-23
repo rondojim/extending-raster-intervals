@@ -29,12 +29,10 @@ RasterGrid::RasterGrid(double n_, Point min_corner_, Point max_corner_, double p
 
 double RasterGrid::min_above_or_equal_k(double xmin, double xmax, double k) {
   if (step <= 0) {
-    std::cerr << "Step must be positive.\n";
     return std::numeric_limits<double>::quiet_NaN();
   }
 
   if (k < xmin || k > xmax) {
-    std::cerr << "Invalid input, given k is not in range [xmin,xmax]\n";
     return std::numeric_limits<double>::quiet_NaN();
   }
 
@@ -47,9 +45,6 @@ double RasterGrid::min_above_or_equal_k(double xmin, double xmax, double k) {
 
   // should be unneccessary
   if (result < xmin - prec_epsilon || result > xmax + prec_epsilon) {
-    std::cout << std::fixed << std::setprecision(16);
-    std::cerr << "Unexpected result not in [xmin, xmax] = [" << xmin << ", "
-              << xmax << "], k = " << k << ", result = " << result << std::endl;
     return std::numeric_limits<double>::quiet_NaN();
   }
 
@@ -58,14 +53,10 @@ double RasterGrid::min_above_or_equal_k(double xmin, double xmax, double k) {
 
 double RasterGrid::max_below_or_equal_k(double xmin, double xmax, double k) {
   if (step <= 0) {
-    std::cerr << "Step must be positive.\n";
     return std::numeric_limits<double>::quiet_NaN();
   }
 
   if (k < xmin || k > xmax) {
-    std::cerr << "Invalid input, given k is not in range [xmin,xmax]\n";
-    std::cerr << "k: " << k << ", xmin: " << xmin << ", xmax: " << xmax
-              << std::endl;
     return std::numeric_limits<double>::quiet_NaN();
   }
 
@@ -74,9 +65,6 @@ double RasterGrid::max_below_or_equal_k(double xmin, double xmax, double k) {
 
   // should be unneccessary
   if (result < xmin - prec_epsilon || result > xmax + prec_epsilon) {
-    std::cerr << std::fixed << std::setprecision(20);
-    std::cerr << "Unexpected result not in [xmin, xmax] = [" << xmin << ", "
-              << xmax << "], k = " << k << ", result = " << result << std::endl;
     return std::numeric_limits<double>::quiet_NaN();
   }
   return result;
@@ -88,12 +76,10 @@ unsigned int RasterGrid::sequence_idx(double x, double xmin) {
 
 int RasterGrid::k_belongs_in_sequence(double xmin, double xmax, double k) {
   if (step <= 0) {
-    std::cerr << "Step must be positive.\n";
     return -1;
   }
 
   if (k < xmin || k > xmax) {
-    std::cerr << "Invalid input, given k is not in range [xmin,xmax]\n";
     return -1;
   }
 
@@ -120,14 +106,11 @@ bool RasterGrid::set_segment_borders_types(
   if (parallelism == 1) {
    
     // parallel to x axis
-    // std::cout << "xmin: " << xmin << ", xmax: " << xmax << std::endl;
     int y_is_on_grid_row = k_belongs_in_sequence(ymin, ymax, p1.y);
-    // std::cout << "y_is_on_grid_row: " << y_is_on_grid_row << std::endl;
     if (y_is_on_grid_row == -1) {
       return false;
     }
     if (y_is_on_grid_row){
-      // std::cout << "y_is_on_grid_row: " << p1.to_str() << " - " << p2.to_str() << std::endl;
       int row_idx = sequence_idx(p1.y, ymin);
       min_row_idx, max_row_idx;
       if (row_idx == 0) {
@@ -153,9 +136,6 @@ bool RasterGrid::set_segment_borders_types(
       on_grid_max_x = min_above_or_equal_k(xmin, xmax, seg_max_x);
 
       if (std::isnan(on_grid_min_x) || std::isnan(on_grid_max_x)) {
-        std::cerr << "Error in set_segment_borders_types for parallel in x "
-                     "axis: min_above_or_equal_k or "
-                     "max_below_or_equal_k returned NaN\n";
         return false;
       }
 
@@ -187,7 +167,6 @@ bool RasterGrid::set_segment_borders_types(
       return false;
     }
     if (y_is_on_grid_col){
-      // std::cout << "y_is_on_grid_col: " << p1.to_str() << " - " << p2.to_str() << std::endl;
       int col_idx = sequence_idx(p1.x, xmin);
       min_col_idx, max_col_idx;
       if (col_idx == 0) {
@@ -213,17 +192,11 @@ bool RasterGrid::set_segment_borders_types(
       on_grid_max_y = min_above_or_equal_k(ymin, ymax, seg_max_y);
 
       if (std::isnan(on_grid_min_y) || std::isnan(on_grid_max_y)) {
-        std::cerr << "Error in set_segment_borders_types for parallel in y "
-                     "axis: min_above_or_equal_k or "
-                     "max_below_or_equal_k returned NaN\n";
         return false;
       }
 
-      // std::cout << "on_grid_min_y: " << on_grid_min_y << ", ymin: " << ymin << std::endl;
-      // std::cout << "on_grid_max_y: " << on_grid_max_y << ", ymin: " << ymin << std::endl;
       min_row_idx = sequence_idx(on_grid_min_y, ymin);
       max_row_idx = sequence_idx(on_grid_max_y, ymin);
-      // std::cout << "min_row_idx: " << min_row_idx << ", max_row_idx: " << max_row_idx << std::endl;
 
       // if we have rows min, max idxs i, j, i < j then the cells'
       // position in map are i, i+1, ..., j-1
@@ -235,13 +208,11 @@ bool RasterGrid::set_segment_borders_types(
         min_row_idx--;
       }
 
-      
       if (are_equal(seg_max_y, on_grid_max_y, prec_epsilon) && on_grid_max_y < ymax) {
         // the max y of the line which overalaps a grid row is on a corner 
         // include the higher row too 
         max_row_idx++;
       }
-
     } else {
       return true;
     }
@@ -254,13 +225,8 @@ bool RasterGrid::set_segment_borders_types(
   std::vector<std::vector<const Point *>> empty_vec;
   RasterCellInfo weak_rcell_info = RasterCellInfo(empty_vec, weak_cell_code);
 
-  // std::cout << "min_row_idx: " << min_row_idx << ", max_row_idx: " << max_row_idx << std::endl;
-  // std::cout << "min_col_idx: " << min_col_idx << ", max_col_idx: " << max_col_idx << std::endl;
-
   for (int i = min_row_idx; i <= max_row_idx; i++) {   
-    // double y1 = min_corner.y + j * step, y2 = min_corner.y + (j+1) * step;
     for (int j = min_col_idx; j <= max_col_idx; j++) {
-      // double x1 = min_corner.x + i * step, x2 = min_corner.x + (i+1) * step;
       std::pair<int, int> j_i = {j, i};
       i_j_to_rcell_info[j_i] = weak_rcell_info;
     }
@@ -287,7 +253,7 @@ bool RasterGrid::set_polygon_borders_cell_types(
 
 bool RasterGrid::is_certain_full_cell(
     const std::vector<const Point *> &vertices, const Point &p1,
-    const Point &p2, bool debug) {
+    const Point &p2) {
   const Point p3(p2.x, p2.y + step);
   const Point p4(p1.x, p1.y + step);
 
@@ -306,10 +272,6 @@ bool RasterGrid::is_certain_full_cell(
       }
     }
     if (!found) {
-      if (debug) {
-        std::cout << "Not found corner: (" << corner.x << ", " << corner.y
-                  << ")\n";
-      }
       return false;
     }
   }
@@ -319,24 +281,16 @@ bool RasterGrid::is_certain_full_cell(
 
 BinaryCellCode
 RasterGrid::encode(std::vector<std::vector<const Point *>> &vertices_vectors,
-                   const Point &p1, const Point &p2, bool debug) {
-  if (debug)
-    std::cout << "in encode...\n";
+                   const Point &p1, const Point &p2) {
 
   if (vertices_vectors.size() == 0) {
-    std::cout << "aaaaaa\n";
-
     return BinaryCellCode(BinaryCellCode::NULL_CODE);
   }
 
-  if (vertices_vectors.size() == 1 &&
-      is_certain_full_cell(vertices_vectors[0], p1, p2)) {
+  if (vertices_vectors.size() == 1 && is_certain_full_cell(vertices_vectors[0], p1, p2)) {
     double cell_poly_area = get_polygons_area(vertices_vectors);
     if (!are_equal(cell_poly_area, cell_area, prec_epsilon)) {
-      std::cout << "cell_poly_area: " << cell_poly_area
-                << ", cell_area: " << cell_area << std::endl;
-      is_certain_full_cell(vertices_vectors[0], p1, p2, true);
-      std::cout << "cell_poly_area != cell_area \n";
+      std::cout << "cell_poly_area: " << cell_poly_area << " != cell_area: " << cell_area << std::endl;
       return BinaryCellCode(BinaryCellCode::NULL_CODE);
     }
 
@@ -351,22 +305,11 @@ RasterGrid::encode(std::vector<std::vector<const Point *>> &vertices_vectors,
 
   } else {
     if (cell_poly_area - cell_area > clipped_cell_area_tol) {
-
-      std::cout << "cell_poly_area: " << cell_poly_area
-                << ", cell_area: " << cell_area << std::endl;
-      is_certain_full_cell(vertices_vectors[0], p1, p2, true);
       return BinaryCellCode(BinaryCellCode::NULL_CODE);
     }
-
     if (2.0 * cell_poly_area >= cell_area) {
       return BinaryCellCode(BinaryCellCode::STRONG_R);
-
     } else {
-      if (debug) {
-        std::cout << "cell_poly_area: " << cell_poly_area
-                  << ", cell_area: " << cell_area << std::endl;
-        std::cout << "WEAK\n";
-      }
       return BinaryCellCode(BinaryCellCode::WEAK_R);
     }
   }
@@ -394,7 +337,7 @@ BinaryCellCode::BinaryCellCode(Code code, bool type_R_)
 // Get value
 unsigned long BinaryCellCode::to_ulong() const { return value.to_ulong(); }
 
-const char *BinaryCellCode::to_type(bool debug) const {
+const char *BinaryCellCode::to_type() const {
   unsigned long val = value.to_ulong();
   if (type_R) {
     if (val == FULL_R) {
@@ -439,8 +382,7 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
                         std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
                         std::set<int> &null_cell_code_poly_idxs,
-                        std::set<int> &error_poly_idxs,
-                        std::string err_poly_f_name, bool debug) {
+                        std::set<int> &error_poly_idxs) {
 
   progressbar bar(lhs_polygons.size() + rhs_polygons.size());
 
@@ -448,11 +390,8 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
   for (Polygon &polygon : lhs_polygons) {
     std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
         i_j_to_rcell_info;
-    int success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info, debug);
+    int success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info);
     if (!success) {
-      // if (err_poly_f_name.size()) {
-      //   polygon.save_poly(err_poly_f_name.c_str());
-      // }
       error_poly_idxs.insert(polygon.polygon_id);
       error = true;
     } else if (success == 2) {
@@ -469,11 +408,8 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
     std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
         i_j_to_rcell_info;
 
-    int success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info, debug);
+    int success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info);
     if (!success) {
-      // if (err_poly_f_name.size()) {
-      //   polygon.save_poly(err_poly_f_name.c_str());
-      // }
       error_poly_idxs.insert(polygon.polygon_id);
       error = true;
     } else if (success == 2) {
@@ -538,8 +474,6 @@ void join_poly_cell_types(std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
           RasterCellInfo r_cell_info = r_cell_it->second;
           inter = join_cell_types(l_cell_info.cell_type, r_cell_info.cell_type);
           if (inter == 1) {
-            std::cout << "interesct in i,j: " << l_cell_j_i.first << ", "
-                      << l_cell_j_i.second << std::endl;
             break;
           }
         }
