@@ -18,7 +18,7 @@ struct Point {
   Point &operator=(const Point &other);
 
   // Return true if points are equal, else false
-  bool equal_points(const Point& other, double epsilon) const;
+  bool equal_points(const Point &other, double epsilon) const;
 
   // returns point in str format
   // (x y)
@@ -42,7 +42,8 @@ struct Polygon {
   // x0 y0
   // x1 y1
   // xn yn
-  void save_poly(const char *output_file, const char *mode = "w", bool append_poly=false);
+  void save_poly(const char *output_file, const char *mode = "w",
+                 bool append_poly = false);
 
   // prints the vertices of the polygon
   void print_();
@@ -55,8 +56,8 @@ struct Polygon {
   void save_vertices_to_csv(const char *output_file);
 
   // The signed area of the polygon is calculated using the formula
-  // If the area is positive, the vertices are in a counterclockwise order (true)
-  // if negative, they are in a clockwise order (false)
+  // If the area is positive, the vertices are in a counterclockwise order
+  // (true) if negative, they are in a clockwise order (false)
   bool is_ccw() const;
 
   // reverse the vertices order
@@ -75,7 +76,8 @@ return The cross product of vectors p1p2 and p1p3. */
 double cross_product(const Point &p1, const Point &p2, const Point &p3);
 
 // returns true of p1, p2, p3 are collinear, else false
-bool are_collinear(const Point &p1, const Point &p2, const Point &p3, double epsilon);
+bool are_collinear(const Point &p1, const Point &p2, const Point &p3,
+                   double epsilon);
 
 // calculates the x-coordinate where two lines, defined by
 // the points (p1, p2) and (p3, p4), intersect. If the lines are parallel
