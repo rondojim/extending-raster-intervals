@@ -514,8 +514,8 @@ int RasterGrid::weiler_rasterize_poly(
       fully_hori_clipped_vertices, semi_hori_clipped_vertices,
       cur_hori_clipped_vertices;
 
-  std::map<int, std::vector<std::vector<const Point *>>>
-      j_to_vertices_vectors;
+  std::map<std::pair<int, int>, std::vector<std::vector<const Point *>>>
+      i_j_to_vertical_clipped, i_j_to_hori_clipped;
 
   cur_vert_clipped_vertices = vertices_vectors;
   semi_vert_clipped_vertices =
@@ -555,9 +555,23 @@ int RasterGrid::weiler_rasterize_poly(
     semi_hori_clipped_vertices = cur_hori_clipped_vertices;
 
     // FOR TESTING
-    if (semi_hori_clipped_vertices.size()){
-      std::vector<std::vector<const Point*>> cur_vec = semi_hori_clipped_vertices;
-      j_to_vertices_vectors[j] = cur_vec;
+    if (!semi_hori_clipped_vertices.empty()) {
+        std::vector<std::vector<const Point*>> cur_vec;
+        
+        for (const auto& polygon : semi_hori_clipped_vertices) {
+            std::vector<const Point*> new_polygon;
+            for (const auto* point : polygon) {
+                if (point) {
+                    // Create a new Point instance for deep copy
+                    Point* new_point = new Point(point->x, point->y);
+                    new_polygon.push_back(new_point);
+                }
+            }
+            cur_vec.push_back(new_polygon);
+        }
+
+        std::pair<int, int> i_j = {j, j};
+        i_j_to_vertical_clipped[i_j] = cur_vec;
     }
 
     for (int i = ymax_idx - 1; i >= ymin_idx; i--) {
@@ -588,6 +602,7 @@ int RasterGrid::weiler_rasterize_poly(
           }
           i_j_to_rcell_info[i_j] =
               RasterCellInfo(semi_hori_clipped_vertices, cell_code);
+              i_j_to_hori_clipped[i_j] = semi_hori_clipped_vertices;
         }
       } else {
         semi_hori_clipped_vertices.clear();
@@ -619,12 +634,14 @@ int RasterGrid::weiler_rasterize_poly(
           }
           i_j_to_rcell_info[i_j] =
               RasterCellInfo(fully_hori_clipped_vertices, cell_code);
+          i_j_to_hori_clipped[i_j] = fully_hori_clipped_vertices;
         }
       }
     }
   }
 
-  save_clipped_vertices_vectors("column_rasterization.txt", j_to_vertices_vectors);
+  save_clipped_vertices_vectors("weiler_column_rasterization.txt", i_j_to_vertical_clipped, polygon.minCorner,polygon.maxCorner);
+  save_clipped_vertices_vectors("weiler_row_rasterization.txt", i_j_to_hori_clipped, polygon.minCorner,polygon.maxCorner);
 
   return 1;
 }

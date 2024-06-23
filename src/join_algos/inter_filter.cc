@@ -541,7 +541,7 @@ void join_poly_cell_types(std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
   }
 }
 
-void print_test_error_info(Polygon polygon, RasterGrid grid)
+void print_poly_grid_info(Polygon polygon, RasterGrid grid)
 {
    // print_vec(polygon.vertices);
     std::cout << std::endl;

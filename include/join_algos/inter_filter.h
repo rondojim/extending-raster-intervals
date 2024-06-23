@@ -1,5 +1,6 @@
 #ifndef INTER_FILTER_H
 #define INTER_FILTER_H
+
 #include "../../include/utils/geometry_types.h"
 #include <bitset>
 #include <iomanip>
@@ -319,10 +320,31 @@ public:
   // IS NOT COMPLETED
   bool save_polygons_grid(const char *output_file, std::vector<Polygon>& polygons, 
    std::vector<RasterPolygonInfo> i_j_to_rpoly_info, const char *mode = "w");
+
+  // write vertices_vectors in output_file in given mode
+  // in format 
+  // xmin_idx, ymin_idx, xmax_idx, ymax_idx // idx of the polygon mbr on the grid
+  // min_corner.x, min_corner.y, max_corner.x, max_corner.y, step // of the grid
+  // x0 y0
+  // x1 y1
+  // xn yn
+  // poly
+  // ...
+  // x0 y0
+  // x1 y1
+  // xn yn
+  // poly
+  // column j
+  void save_clipped_vertices_vectors(
+      const char *output_file,
+      std::map<std::pair<int, int>, std::vector<std::vector<const Point *>>> &i_j_to_clipped_vertices,
+      Point& poly_min_corner, Point& poly_max_corner,
+      const char *mode="w");
 };
 
 // rasterize the lhs_polygons, rhs_polygons and save their 
 // raster representation in the lhs_i_j_to_rpoly_info, rhs_i_j_to_rpoly_info
+// returns true if at least one error occured, else false
 bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::vector<Polygon> &rhs_polygons,
                         std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
@@ -331,6 +353,11 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
                         std::set<int> &error_poly_idxs,
                         std::string err_poly_f_name="", bool debug=false);
 
+// we join all pair of lygons between lhs_i_j_to_rpoly_info 
+// and rhs_i_j_to_rpoly_info to insert the interescting 
+// to result and the indecisive to the respective set.
+// the join is performed per cell (3 bits). 
+// For testing! 
 void join_poly_cell_types(std::vector<RasterPolygonInfo> &lhs_i_j_to_rpoly_info,
                         std::vector<RasterPolygonInfo> &rhs_i_j_to_rpoly_info,
                         std::set<std::pair<int, int>> &result,
@@ -348,27 +375,11 @@ bool is_less_or_equal(double a, double b, double epsilon);
 // xn yn
 void save_vertices(std::vector<const Point *> vertices, const char *output_file,
                    const char *mode = "w");
-// write vertices_vectors in output_file in given mode
-// in format 
-// x0 y0
-// x1 y1
-// xn yn
-// poly
-// ...
-// x0 y0
-// x1 y1
-// xn yn
-// poly
-// column j
-void save_clipped_vertices_vectors(
-    const char *output_file,
-    std::map<int, std::vector<std::vector<const Point *>>> &i_j_to_clipped_vertices,
-    const char *mode= "w");
 
 // save segment p1, p2 and vertices vectors in output file in given mode
 void save_vertices_vectors_seg(std::vector<std::vector<const Point *>> vertices_vectors,
                      const Point &p1, const Point &p2,
-                     const char *output_file="clip_error.txt");
+                     const char *output_file);
 
 // save clipped vertices in output_file in given mode
 // in format:
@@ -404,6 +415,7 @@ void save_clipped_vertices_cell_type(const char *output_file,
                                        RasterCellInfo> &i_j_to_rcell_info,
                         const char *mode = "w");
 
-void print_test_error_info(Polygon polygon, RasterGrid grid);
+// print grid partition, mbr and polygon mrb, vertices
+void print_poly_grid_info(Polygon polygon, RasterGrid grid);
 
 #endif

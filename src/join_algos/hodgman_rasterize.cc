@@ -153,6 +153,9 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
       cur_vert_clipped_vertices, fully_hori_clipped_vertices, 
       semi_hori_clipped_vertices, cur_hori_clipped_vertices; 
 
+  std::map<std::pair<int, int>, std::vector<std::vector<const Point *>>>
+      i_j_to_vertical_clipped, i_j_to_hori_clipped;
+
   cur_vert_clipped_vertices = polygon.vertices;
   semi_vert_clipped_vertices = polygon.vertices; 
 
@@ -182,6 +185,13 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
       }
 
       semi_hori_clipped_vertices = cur_hori_clipped_vertices;
+      
+      // FOR TESTING
+      if (!semi_hori_clipped_vertices.empty()) {
+          std::pair<int, int> i_j = {j, j};
+          i_j_to_vertical_clipped[i_j].push_back(cur_hori_clipped_vertices);
+      }
+
 
       for (int i = ymax_idx - 1; i >= ymin_idx; i--) {
           fully_hori_clipped_vertices.clear();
@@ -210,6 +220,7 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
                       return false;
                   }
                   i_j_to_rcell_info[i_j] = RasterCellInfo(semi_hori_clipped_vertices_vec, cell_code);
+                  i_j_to_hori_clipped[i_j].push_back(semi_hori_clipped_vertices);
               }
           }
           else {
@@ -241,12 +252,16 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
                   }
                   i_j_to_rcell_info[i_j] =
                       RasterCellInfo(fully_hori_clipped_vertices_vec, cell_code);
+                      i_j_to_hori_clipped[i_j].push_back(fully_hori_clipped_vertices);
               }
 
           }
 
       }
     }
+    save_clipped_vertices_vectors("hodgman_column_rasterization.txt", i_j_to_vertical_clipped, polygon.minCorner,polygon.maxCorner);
+    save_clipped_vertices_vectors("hodgman_row_rasterization.txt", i_j_to_hori_clipped, polygon.minCorner,polygon.maxCorner);
+
 
     return true;
 }

@@ -46,30 +46,46 @@ void save_vertices_vectors_seg(std::vector<std::vector<const Point *>> vertices_
 
 }
 
-
-void save_clipped_vertices_vectors(
+void RasterGrid::save_clipped_vertices_vectors(
     const char *output_file,
-    std::map<int, std::vector<std::vector<const Point *>>> &i_j_to_clipped_vertices,
-    const char *mode){
+    std::map<std::pair<int, int>, std::vector<std::vector<const Point *>>> &i_j_to_clipped_vertices,
+    Point& poly_min_corner, Point& poly_max_corner,
+    const char *mode)
+{ 
+  // std::cout << poly_min_corner.to_str() << " " << poly_max_corner.to_str() << std::endl;
+  double xmin =
+      max_below_or_equal_k(min_corner.x, max_corner.x, poly_min_corner.x);
+  double ymin =
+      max_below_or_equal_k(min_corner.y, max_corner.y, poly_min_corner.y);
+  double xmax =
+      min_above_or_equal_k(min_corner.x, max_corner.x, poly_max_corner.x);
+  double ymax =
+      min_above_or_equal_k(min_corner.y, max_corner.y, poly_max_corner.y);
 
-  int cnt = 0;
+
+  int xmin_idx = sequence_idx(xmin, min_corner.x);
+  int xmax_idx = sequence_idx(xmax, min_corner.x);
+
+  int ymin_idx = sequence_idx(ymin, min_corner.y);
+  int ymax_idx = sequence_idx(ymax, min_corner.y);
+
+
   FILE *fp = fopen(output_file, mode);
+  fprintf(fp, "%d %d %d %d\n", xmin_idx, ymin_idx, xmax_idx, ymax_idx);
+  fprintf(fp, "%lf %lf %lf %lf %lf\n", min_corner.x, min_corner.y, max_corner.x, max_corner.y, step);
+
+
   for (const auto &entry : i_j_to_clipped_vertices) {
     const std::vector<std::vector<const Point*>> vertices_vectors = entry.second;
     for (const std::vector<const Point *> &vertices : vertices_vectors) {
-      
-      if (!cnt){
-        save_vertices(vertices, output_file, "w");
-      }
-      else{
-        save_vertices(vertices, output_file, "a");
-      }
-  
-      fprintf(fp, "poly\n");
-      cnt++;
+        for (int i = 0; i < vertices.size(); ++i) {
+          fprintf(fp, "%lf %lf\n", vertices[i]->x, vertices[i]->y);
+        }
+        fprintf(fp, "poly\n");
     }
-    fprintf(fp, "column %d\n", entry.first);
+    fprintf(fp, "column %d %d\n", entry.first.first, entry.first.second);
   }
+  
   fclose(fp);
 }
 
@@ -86,8 +102,8 @@ void save_clipped_vertices_cell_type(const char *output_file,
     const RasterCellInfo &rcell_info = entry.second;
 
     for (const std::vector<const Point *> &vec : rcell_info.cell_polygons) {
-      for (const Point *point : vec) {
-        fprintf(fp, "%lf %lf\n", point->x, point->y);
+      for (int i = 0; i < vec.size(); ++i) {
+        fprintf(fp, "%lf %lf\n", vec[i]->x, vec[i]->y);
       }
 
       fprintf(fp, "poly\n");
@@ -149,7 +165,6 @@ bool RasterGrid::save_poly_raster(const char *output_file, Polygon& polygon,
 // IS NOT COMPLETED
 bool RasterGrid::save_polygons_grid(const char *output_file, std::vector<Polygon>& polygons, 
     std::vector<RasterPolygonInfo> i_j_to_rpoly_info, const char *mode) {
-
   FILE *fp = fopen(output_file, mode);
 
   Point polygonsMinCorner, polygonsMaxCorner;
