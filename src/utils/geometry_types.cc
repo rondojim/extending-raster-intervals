@@ -22,8 +22,7 @@ Point &Point::operator=(const Point &other) {
   return *this;
 }
 
-
-bool Point::equal_points(const Point& other, double epsilon) const {
+bool Point::equal_points(const Point &other, double epsilon) const {
   return (std::abs(x - other.x) < epsilon && std::abs(y - other.y) < epsilon);
 }
 
@@ -52,7 +51,8 @@ void Polygon::findMBR() {
   }
 }
 
-void Polygon::save_poly(const char *output_file, const char *mode, bool append_poly) {
+void Polygon::save_poly(const char *output_file, const char *mode,
+                        bool append_poly) {
   FILE *fp = fopen(output_file, mode);
   for (int i = 0; i < vertices.size(); ++i) {
     fprintf(fp, "%lf %lf\n", vertices[i]->x, vertices[i]->y);
@@ -128,8 +128,10 @@ double cross_product(const Point &p1, const Point &p2, const Point &p3) {
   return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
 }
 
-bool are_collinear(const Point &p1, const Point &p2, const Point &p3, double epsilon) {
-  return std::abs(cross_product(p1, p2, p3)) < epsilon; // Consider floating-point precision issues
+bool are_collinear(const Point &p1, const Point &p2, const Point &p3,
+                   double epsilon) {
+  return std::abs(cross_product(p1, p2, p3)) <
+         epsilon; // Consider floating-point precision issues
 }
 
 double x_intersect_(const Point &p1, const Point &p2, const Point &p3,
@@ -230,8 +232,8 @@ bool doIntersect(const Point &p1, const Point &q1, const Point &p2,
 
 bool Polygon::point_inside(const Point &p) const {
   int n = vertices.size();
-  int x = p.x;
-  int y = p.y;
+  double x = p.x;
+  double y = p.y;
 
   if (n < 3)
     return false;

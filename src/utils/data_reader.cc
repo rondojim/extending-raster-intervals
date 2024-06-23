@@ -39,6 +39,11 @@ std::vector<Polygon> read_data_find_MBR(const std::string &filename,
     Polygon polygon;
     polygon.vertices = parse_wkt(line);
 
+    if (polygon.vertices.size() < 3) {
+      printf("Polygon with less than 3 vertices: %d\n",
+             polygon.vertices.size());
+      continue;
+    }
     if (polygon.is_ccw()) {
       cnt_ccw++;
       polygon.make_cw();
