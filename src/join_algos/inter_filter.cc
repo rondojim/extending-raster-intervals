@@ -437,9 +437,9 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
         i_j_to_rcell_info;
     int success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info, debug);
     if (!success) {
-      if (err_poly_f_name.size()) {
-        polygon.save_poly(err_poly_f_name.c_str());
-      }
+      // if (err_poly_f_name.size()) {
+      //   polygon.save_poly(err_poly_f_name.c_str());
+      // }
       error_poly_idxs.insert(polygon.polygon_id);
       error = true;
     } else if (success == 2) {
@@ -458,9 +458,9 @@ bool rasterize_polygons(RasterGrid &grid, std::vector<Polygon> &lhs_polygons,
 
     int success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info, debug);
     if (!success) {
-      if (err_poly_f_name.size()) {
-        polygon.save_poly(err_poly_f_name.c_str());
-      }
+      // if (err_poly_f_name.size()) {
+      //   polygon.save_poly(err_poly_f_name.c_str());
+      // }
       error_poly_idxs.insert(polygon.polygon_id);
       error = true;
     } else if (success == 2) {
