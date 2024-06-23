@@ -471,10 +471,10 @@ int RasterGrid::weiler_rasterize_poly(
         &i_j_to_rcell_info,
     bool debug) {
 
-  if (!set_polygon_borders_cell_types(polygon.vertices, i_j_to_rcell_info)) {
-    std::cerr << "Error in set_polygon_borders_cell_types\n";
-    return 0;
-  }
+  // if (!set_polygon_borders_cell_types(polygon.vertices, i_j_to_rcell_info)) {
+  //   std::cerr << "Error in set_polygon_borders_cell_types\n";
+  //   return 0;
+  // }
 
   // Find the corners of the grid
   // that enclose the polygon mbr
@@ -550,22 +550,22 @@ int RasterGrid::weiler_rasterize_poly(
 
     // FOR TESTING
     if (!semi_hori_clipped_vertices.empty()) {
-        std::vector<std::vector<const Point*>> cur_vec;
-        
-        for (const auto& polygon : semi_hori_clipped_vertices) {
-            std::vector<const Point*> new_polygon;
-            for (const auto* point : polygon) {
-                if (point) {
-                    // Create a new Point instance for deep copy
-                    Point* new_point = new Point(point->x, point->y);
-                    new_polygon.push_back(new_point);
-                }
-            }
-            cur_vec.push_back(new_polygon);
-        }
+      std::vector<std::vector<const Point *>> cur_vec;
 
-        std::pair<int, int> i_j = {j, j};
-        i_j_to_vertical_clipped[i_j] = cur_vec;
+      for (const auto &polygon : semi_hori_clipped_vertices) {
+        std::vector<const Point *> new_polygon;
+        for (const auto *point : polygon) {
+          if (point) {
+            // Create a new Point instance for deep copy
+            Point *new_point = new Point(point->x, point->y);
+            new_polygon.push_back(new_point);
+          }
+        }
+        cur_vec.push_back(new_polygon);
+      }
+
+      std::pair<int, int> i_j = {j, j};
+      i_j_to_vertical_clipped[i_j] = cur_vec;
     }
 
     for (int i = ymax_idx - 1; i >= ymin_idx; i--) {
@@ -597,7 +597,7 @@ int RasterGrid::weiler_rasterize_poly(
           }
           i_j_to_rcell_info[i_j] =
               RasterCellInfo(semi_hori_clipped_vertices, cell_code);
-              i_j_to_hori_clipped[i_j] = semi_hori_clipped_vertices;
+          i_j_to_hori_clipped[i_j] = semi_hori_clipped_vertices;
         }
       } else {
         semi_hori_clipped_vertices.clear();
@@ -635,8 +635,10 @@ int RasterGrid::weiler_rasterize_poly(
     }
   }
 
-  // save_clipped_vertices_vectors("weiler_column_rasterization.txt", i_j_to_vertical_clipped, polygon.minCorner,polygon.maxCorner);
-  // save_clipped_vertices_vectors("weiler_row_rasterization.txt", i_j_to_hori_clipped, polygon.minCorner,polygon.maxCorner);
+  // save_clipped_vertices_vectors("weiler_column_rasterization.txt",
+  // i_j_to_vertical_clipped, polygon.minCorner,polygon.maxCorner);
+  // save_clipped_vertices_vectors("weiler_row_rasterization.txt",
+  // i_j_to_hori_clipped, polygon.minCorner,polygon.maxCorner);
 
   return 1;
 }

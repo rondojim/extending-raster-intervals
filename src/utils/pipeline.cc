@@ -221,9 +221,9 @@ void find_interesctions(
   printf("Serialization duration: %.2f\n", serialization_duration);
   printf("RI join duration: %.2f\n", ri_join_duration);
   printf("Refiment step duration: %.2f\n", indecisive_duration);
-  printf("True hits percentage: %.2f%\n", true_hits_ratio * 100);
-  printf("False hits percentage: %.2f%\n", false_hits_ratio * 100);
-  printf("Indecisive percentage: %.2f%\n", indecisive_ratio * 100);
+  printf("True hits percentage: %.2f\n", true_hits_ratio * 100);
+  printf("False hits percentage: %.2f\n", false_hits_ratio * 100);
+  printf("Indecisive percentage: %.2f\n", indecisive_ratio * 100);
 
   // check if true hits are correct
   int total_errors_true_hits = 0;
@@ -232,6 +232,7 @@ void find_interesctions(
     Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
 
     if (!lhs_p.intersects(rhs_p)) {
+      printf("Id %d and %d\n", r.first, r.second);
       printf("Error in true hits\n");
       total_errors_true_hits++;
     }
@@ -248,6 +249,7 @@ void find_interesctions(
     Polygon rhs_p = rhs_polygons_copy[-r.second - 1];
 
     if (lhs_p.intersects(rhs_p)) {
+      printf("Id %d and %d\n", r.first, r.second);
       printf("Error in false hits\n");
       total_errors_false_hits++;
     }
@@ -255,9 +257,9 @@ void find_interesctions(
 
   // print total errors and with ratios
   printf("Total errors in true hits: %d\n", total_errors_true_hits);
-  printf("Error in true hits ratio: %.2f%\n",
+  printf("Error in true hits ratio: %.2f\n",
          (double)total_errors_true_hits / true_hits * 100);
   printf("Total errors in false hits: %d\n", total_errors_false_hits);
-  printf("Error in false hits ratio: %.2f%\n",
+  printf("Error in false hits ratio: %.2f\n",
          (double)total_errors_false_hits / false_hits * 100);
 }
