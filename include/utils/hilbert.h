@@ -1,7 +1,7 @@
 #ifndef HILBERT_H
 #define HILBERT_H
 
-#include "../join_algos/inter_filter.h"
+#include "../join_algos/rasterization.h"
 #include <map>
 #include <string>
 #include <vector>

@@ -1,4 +1,4 @@
-#include "../../include/join_algos/inter_filter.h"
+#include "../../include/join_algos/rasterization.h"
 #include "../../include/join_algos/ri_join_algo.h"
 #include "../../include/join_algos/serialize_polygon.h"
 #include "../../include/mbr_algos/combined_sweep.h"

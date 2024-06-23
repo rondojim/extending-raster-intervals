@@ -1,7 +1,7 @@
 #ifndef RI_JOIN_ALGO_H
 #define RI_JOIN_ALGO_H
 
-#include "inter_filter.h"
+#include "rasterization.h"
 #include "serialize_polygon.h"
 #include <vector>
 

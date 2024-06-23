@@ -1,5 +1,5 @@
-#ifndef INTER_FILTER_H
-#define INTER_FILTER_H
+#ifndef RASTERIZATION_H
+#define RASTERIZATION_H
 
 #include "../../include/utils/geometry_types.h"
 #include <bitset>

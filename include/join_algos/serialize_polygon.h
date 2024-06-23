@@ -1,7 +1,7 @@
 #ifndef SERIALIZE_POLYGON_H
 #define SERIALIZE_POLYGON_H
 
-#include "inter_filter.h"
+#include "rasterization.h"
 #include <boost/dynamic_bitset.hpp>
 #include <map>
 #include <vector>

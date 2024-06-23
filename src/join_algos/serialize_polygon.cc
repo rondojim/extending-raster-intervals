@@ -1,5 +1,5 @@
 #include "../../include/join_algos/serialize_polygon.h"
-#include "../../include/join_algos/inter_filter.h"
+#include "../../include/join_algos/rasterization.h"
 #include "../../include/utils/geometry_types.h"
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
