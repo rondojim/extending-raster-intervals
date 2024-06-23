@@ -5,8 +5,8 @@
 #include <map>
 
 void RasterGrid::hodgman_clip_segment(
-    int i_pos_sigh, int nxt_i_pos_sigh, const Point *p_inter, const Point *p_nxt_i,
-    std::vector<const Point *> &left_vert_clipped_points,
+    int i_pos_sigh, int nxt_i_pos_sigh, const Point *p_inter,
+    const Point *p_nxt_i, std::vector<const Point *> &left_vert_clipped_points,
     std::vector<const Point *> &right_vert_clipped_points) {
   // Case 1: For the right side: When both points are inside
   if (i_pos_sigh < 0 && nxt_i_pos_sigh < 0) {
@@ -36,7 +36,7 @@ void RasterGrid::hodgman_clip_segment(
     left_vert_clipped_points.push_back(p_nxt_i);
   }
   // Case 2: First vertex is outside while second one is inside
-  else if (i_pos_sigh <= 0  && nxt_i_pos_sigh > 0) {
+  else if (i_pos_sigh <= 0 && nxt_i_pos_sigh > 0) {
     // For the left clipped point of intersection with edge and the second point
     // is added
     left_vert_clipped_points.push_back(p_inter);
@@ -49,10 +49,11 @@ void RasterGrid::hodgman_clip_segment(
   }
 }
 
-bool RasterGrid::hodgman_clip(const std::vector<const Point *> &vertices,
-      std::vector<const Point *> &left_vert_clipped_points,
-      std::vector<const Point *> &right_vert_clipped_points,
-      const Point &p1, const Point &p2){
+bool RasterGrid::hodgman_clip(
+    const std::vector<const Point *> &vertices,
+    std::vector<const Point *> &left_vert_clipped_points,
+    std::vector<const Point *> &right_vert_clipped_points, const Point &p1,
+    const Point &p2) {
 
   int poly_size = vertices.size();
   for (int i = 0; i < poly_size - 1; i++) {
@@ -78,8 +79,8 @@ bool RasterGrid::hodgman_clip(const std::vector<const Point *> &vertices,
       }
     }
 
-    hodgman_clip_segment(i_pos_sigh, nxt_i_pos_sigh, p_inter, p_nxt_i, left_vert_clipped_points,
-                 right_vert_clipped_points);
+    hodgman_clip_segment(i_pos_sigh, nxt_i_pos_sigh, p_inter, p_nxt_i,
+                         left_vert_clipped_points, right_vert_clipped_points);
   }
 
   // Append first point as last to include the edge between them
@@ -94,13 +95,14 @@ bool RasterGrid::hodgman_clip(const std::vector<const Point *> &vertices,
   return true;
 }
 
-bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
-                             std::map<std::pair<unsigned int, unsigned int>,
-                                      RasterCellInfo> &i_j_to_rcell_info){
+bool RasterGrid::hodgman_rasterize_poly(
+    Polygon &polygon,
+    std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
+        &i_j_to_rcell_info) {
 
-    if (!set_polygon_borders_cell_types(polygon.vertices, i_j_to_rcell_info)) {
-      return false;
-    }
+  if (!set_polygon_borders_cell_types(polygon.vertices, i_j_to_rcell_info)) {
+    return false;
+  }
 
   // Find the corners of the grid
   // that enclose the polygon mbr
@@ -115,7 +117,7 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
 
   if (std::isnan(xmin) || std::isnan(ymin) || std::isnan(xmax) ||
       std::isnan(ymax)) {
-      return false;
+    return false;
   }
 
   // Find the rows, columns indexes of previous coordinates on the mbr
@@ -141,28 +143,24 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
     x_j = min_corner.x + (j + 1) * step;
     fully_vert_clipped_vertices.clear();
 
-      if (j == xmax_idx - 1) {
-          // in last column the semi_vert_clipped_vertices, ie
-          // the remaining clipped vertices are fully clipped 
-          cur_hori_clipped_vertices = semi_vert_clipped_vertices;
+    if (j == xmax_idx - 1) {
+      // in last column the semi_vert_clipped_vertices, ie
+      // the remaining clipped vertices are fully clipped
+      cur_hori_clipped_vertices = semi_vert_clipped_vertices;
+    } else {
+      semi_vert_clipped_vertices.clear();
+      Point p1_vert(x_j, ymin);
+      Point p2_vert(x_j, ymax);
+      if (!hodgman_clip(cur_vert_clipped_vertices, fully_vert_clipped_vertices,
+                        semi_vert_clipped_vertices, p1_vert, p2_vert)) {
+        return false;
       }
-      else {
-          semi_vert_clipped_vertices.clear();
-          Point p1_vert(x_j, ymin);
-          Point p2_vert(x_j, ymax);
-          if (!hodgman_clip(cur_vert_clipped_vertices,
-              fully_vert_clipped_vertices, semi_vert_clipped_vertices, p1_vert,
-              p2_vert)) 
-          {
-              return false;
-          }
 
       cur_vert_clipped_vertices = semi_vert_clipped_vertices;
       cur_hori_clipped_vertices = fully_vert_clipped_vertices;
     }
 
-      semi_hori_clipped_vertices = cur_hori_clipped_vertices;
-      
+    semi_hori_clipped_vertices = cur_hori_clipped_vertices;
 
     for (int i = ymax_idx - 1; i >= ymin_idx; i--) {
       fully_hori_clipped_vertices.clear();
@@ -176,44 +174,43 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
         // the remaining clipped vertices are fully clipped (being up to the
         // last row)
 
-              if (semi_hori_clipped_vertices.size()) {
-                  std::vector<std::vector<const Point*>> semi_hori_clipped_vertices_vec = {semi_hori_clipped_vertices};
-                  BinaryCellCode cell_code =
-                      encode(semi_hori_clipped_vertices_vec, p1_hori, p2_hori);
-                  if (cell_code.value == BinaryCellCode::NULL_CODE) {
-                      return false;
-                  }
-                  i_j_to_rcell_info[i_j] = RasterCellInfo(semi_hori_clipped_vertices_vec, cell_code);
-                  i_j_to_hori_clipped[i_j].push_back(semi_hori_clipped_vertices);
-              }
+        if (semi_hori_clipped_vertices.size()) {
+          std::vector<std::vector<const Point *>>
+              semi_hori_clipped_vertices_vec = {semi_hori_clipped_vertices};
+          BinaryCellCode cell_code =
+              encode(semi_hori_clipped_vertices_vec, p1_hori, p2_hori);
+          if (cell_code.value == BinaryCellCode::NULL_CODE) {
+            return false;
           }
-          else {
-              semi_hori_clipped_vertices.clear();
-              if (!hodgman_clip(cur_hori_clipped_vertices,
-                  fully_hori_clipped_vertices, semi_hori_clipped_vertices, p1_hori,
-                  p2_hori))
-              {
-                return false;
-              }
+          i_j_to_rcell_info[i_j] =
+              RasterCellInfo(semi_hori_clipped_vertices_vec, cell_code);
+          i_j_to_hori_clipped[i_j].push_back(semi_hori_clipped_vertices);
+        }
+      } else {
+        semi_hori_clipped_vertices.clear();
+        if (!hodgman_clip(cur_hori_clipped_vertices,
+                          fully_hori_clipped_vertices,
+                          semi_hori_clipped_vertices, p1_hori, p2_hori)) {
+          return false;
+        }
 
         cur_hori_clipped_vertices = semi_hori_clipped_vertices;
 
-              if (fully_hori_clipped_vertices.size()) {
-                  std::vector<std::vector<const Point*>> fully_hori_clipped_vertices_vec = {fully_hori_clipped_vertices};
-                  BinaryCellCode cell_code =
-                      encode(fully_hori_clipped_vertices_vec, p1_hori, p2_hori);
-                  if (cell_code.value == BinaryCellCode::NULL_CODE) {
-                    return false;
-                  }
-                  i_j_to_rcell_info[i_j] =
-                      RasterCellInfo(fully_hori_clipped_vertices_vec, cell_code);
-                      i_j_to_hori_clipped[i_j].push_back(fully_hori_clipped_vertices);
-              }
-
+        if (fully_hori_clipped_vertices.size()) {
+          std::vector<std::vector<const Point *>>
+              fully_hori_clipped_vertices_vec = {fully_hori_clipped_vertices};
+          BinaryCellCode cell_code =
+              encode(fully_hori_clipped_vertices_vec, p1_hori, p2_hori);
+          if (cell_code.value == BinaryCellCode::NULL_CODE) {
+            return false;
           }
-
+          i_j_to_rcell_info[i_j] =
+              RasterCellInfo(fully_hori_clipped_vertices_vec, cell_code);
+          i_j_to_hori_clipped[i_j].push_back(fully_hori_clipped_vertices);
+        }
       }
     }
+  }
 
   return true;
 }
