@@ -263,7 +263,7 @@ bool Polygon::is_ccw() const {
   for (int i = 0; i < n; ++i) {
     const Point &p1 = *vertices[i];
     const Point &p2 = *vertices[(i + 1) % n];
-    area += (p2.x - p1.x) * (p2.y + p1.y);
+    area += p1.x * p2.y - p2.x * p1.y;
   }
   return area > 0;
 }
@@ -321,7 +321,7 @@ get_polygons_area(std::vector<std::vector<const Point *>> &vertices_vectors) {
 
 void print_vec(const std::vector<const Point *> &vec) {
   for (const Point *p : vec) {
-    std::cout << std::fixed << std::setprecision(15);
+    // std::cout << std::fixed << std::setprecision(1);
     std::cout << "(" << p->x << ", " << p->y << "), ";
   }
   std::cout << std::endl;

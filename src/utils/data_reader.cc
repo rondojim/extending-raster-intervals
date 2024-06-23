@@ -33,13 +33,14 @@ std::vector<Polygon> read_data_find_MBR(const std::string &filename,
 
   int cnt = 0;
   std::string line;
-  
+  int cnt_ccw = 0;
   while (std::getline(file, line) && n--) {
 
     Polygon polygon;
     polygon.vertices = parse_wkt(line);
 
     if (polygon.is_ccw()) {
+      cnt_ccw++;
       polygon.make_cw();
     }
 
@@ -74,7 +75,7 @@ std::vector<Polygon> read_data_find_MBR(const std::string &filename,
     cnt++;
     polygons.push_back(polygon);
   }
-
+  std::cout << "Total ccw polygons: " << cnt_ccw << std::endl;
   file.close();
   return polygons;
 }

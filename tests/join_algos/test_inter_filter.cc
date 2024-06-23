@@ -114,31 +114,7 @@ int test_rasterize_polygons(
     int weiler_success = grid.weiler_rasterize_poly(polygon, i_j_to_rcell_info);
     int sz = i_j_to_rcell_info.size();
     
-    // if (sz < 100 && sz > 30) {
-      
-    //   bool full=false, strong=false, weak=false;
-    //   for (const auto &entry : i_j_to_rcell_info) {
-    //     RasterCellInfo rc_info = entry.second;
-    //     if (rc_info.cell_type == BinaryCellCode::FULL_R || rc_info.cell_type == BinaryCellCode::FULL_S){
-    //       full = true;
-    //     }
-    //     if (rc_info.cell_type == BinaryCellCode::STRONG_R || rc_info.cell_type == BinaryCellCode::STRONG_S) {
-    //       strong = true;
-    //     }
-    //     if (rc_info.cell_type == BinaryCellCode::WEAK_R || rc_info.cell_type == BinaryCellCode::WEAK_S) {
-    //       weak = true;
-    //     }
-      
-    //   }
-    //   if (full && weak && strong) {
-    //     grid.save_poly_raster("poly_raster.txt", polygon, i_j_to_rcell_info);
-    //     save_clipped_vertices_cell_type("clipped_vertices_cell_type.txt", i_j_to_rcell_info);
-    //     std::cout << "Found!\n";
-    //     return 0;
-    //   }
-    // }
-     grid.save_poly_raster("poly_raster.txt", polygon, i_j_to_rcell_info);
-      save_clipped_vertices_cell_type("clipped_vertices_cell_type.txt", i_j_to_rcell_info);
+    save_clipped_vertices_cell_type("clipped_vertices_cell_type.txt", i_j_to_rcell_info);
 
 
     // print_poly_grid_info(polygon, grid);

@@ -54,8 +54,12 @@ struct Polygon {
   std::string to_wkt();
   void save_vertices_to_csv(const char *output_file);
 
+  // The signed area of the polygon is calculated using the formula
+  // If the area is positive, the vertices are in a counterclockwise order (true)
+  // if negative, they are in a clockwise order (false)
   bool is_ccw() const;
 
+  // reverse the vertices order
   void make_cw();
 };
 

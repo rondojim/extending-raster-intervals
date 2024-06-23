@@ -209,8 +209,8 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
                   BinaryCellCode cell_code =
                       encode(semi_hori_clipped_vertices_vec, p1_hori, p2_hori);
                   if (cell_code.value == BinaryCellCode::NULL_CODE) {
-                      save_vertices_vectors_seg(semi_hori_clipped_vertices_vec, p1_hori, p2_hori,
-                                      "wrong_hodgman_clip.txt");
+                      // save_vertices_vectors_seg(semi_hori_clipped_vertices_vec, p1_hori, p2_hori,
+                      //                 "wrong_hodgman_clip.txt");
                       std::cerr << "NUll Cell Code\n";
                       std::cout << "Failed in [" << i << ", " << j << "]\n";
                       std::cout << "cell polygons: ";
@@ -239,8 +239,8 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
                   BinaryCellCode cell_code =
                       encode(fully_hori_clipped_vertices_vec, p1_hori, p2_hori);
                   if (cell_code.value == BinaryCellCode::NULL_CODE) {
-                    save_vertices_vectors_seg(fully_hori_clipped_vertices_vec, p1_hori, p2_hori,
-                                    "wrong_hodgman_clip.txt");
+                    // save_vertices_vectors_seg(fully_hori_clipped_vertices_vec, p1_hori, p2_hori,
+                                    // "wrong_hodgman_clip.txt");
                     std::cerr << "NUll Cell Code\n";
                     std::cout << "Failed in [" << i << ", " << j << "]\n";
                     std::cout << "cell polygons: ";
@@ -259,8 +259,8 @@ bool RasterGrid::hodgman_rasterize_poly(Polygon &polygon,
 
       }
     }
-    save_clipped_vertices_vectors("hodgman_column_rasterization.txt", i_j_to_vertical_clipped, polygon.minCorner,polygon.maxCorner);
-    save_clipped_vertices_vectors("hodgman_row_rasterization.txt", i_j_to_hori_clipped, polygon.minCorner,polygon.maxCorner);
+    // save_clipped_vertices_vectors("hodgman_column_rasterization.txt", i_j_to_vertical_clipped, polygon.minCorner,polygon.maxCorner);
+    // save_clipped_vertices_vectors("hodgman_row_rasterization.txt", i_j_to_hori_clipped, polygon.minCorner,polygon.maxCorner);
 
 
     return true;
