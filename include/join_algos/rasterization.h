@@ -126,10 +126,11 @@ private:
   // the other segment. Based on that insert points in left_vert_clipped_points,
   // right_vert_clipped_points according to hodgman algo. For the first vector
   // the visible side is the left while fot the second the right
-  void hodgman_clip_segment(int i_pos_sigh, int nxt_i_pos_sigh, const Point *p_inter,
-                    const Point *p_nxt_i,
-                    std::vector<const Point *> &left_vert_clipped_points,
-                    std::vector<const Point *> &right_vert_clipped_points);
+  void
+  hodgman_clip_segment(int i_pos_sigh, int nxt_i_pos_sigh, const Point *p_inter,
+                       const Point *p_nxt_i,
+                       std::vector<const Point *> &left_vert_clipped_points,
+                       std::vector<const Point *> &right_vert_clipped_points);
 
   // Given segment, vertices should be in cw order.
   // Clip the polygon wrt the segment p1,p2
@@ -138,9 +139,9 @@ private:
   // considering as visible to left_vert_clipped_points the left side
   // and the opposite for the right_vert_clipped_points
   bool hodgman_clip(const std::vector<const Point *> &vertices,
-            std::vector<const Point *> &left_vert_clipped_points,
-            std::vector<const Point *> &right_vert_clipped_points,
-            const Point &p1, const Point &p2);
+                    std::vector<const Point *> &left_vert_clipped_points,
+                    std::vector<const Point *> &right_vert_clipped_points,
+                    const Point &p1, const Point &p2);
 
   // sort indexes which enumerate the inter_pts_info together
   // with inter_pts_info on ascending order basen x or y coord
@@ -229,7 +230,6 @@ private:
   encode(std::vector<std::vector<const Point *>> &vertices_vectors,
          const Point &p1, const Point &p2);
 
-
 public:
   std::vector<Point *> allocated_points;
   // n: grid of size nXn
@@ -263,8 +263,8 @@ public:
   return true on success, else false
   */
   bool hodgman_rasterize_poly(Polygon &polygon,
-                             std::map<std::pair<unsigned int, unsigned int>,
-                                      RasterCellInfo> &i_j_to_rcell_info);
+                              std::map<std::pair<unsigned int, unsigned int>,
+                                       RasterCellInfo> &i_j_to_rcell_info);
 
   /*
   rasterize the polygon and save result for each cell
@@ -284,8 +284,8 @@ public:
   1, on success
   */
   int weiler_rasterize_poly(Polygon &polygon,
-                             std::map<std::pair<unsigned int, unsigned int>,
-                                      RasterCellInfo> &i_j_to_rcell_info);
+                            std::map<std::pair<unsigned int, unsigned int>,
+                                     RasterCellInfo> &i_j_to_rcell_info);
 
   // save the rasterization of a poly in output_file in given mode
   // format:

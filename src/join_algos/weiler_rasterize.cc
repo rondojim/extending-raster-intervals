@@ -49,10 +49,10 @@ void RasterGrid::sort_inter_points(std::vector<size_t> &indexes,
       });
 }
 
-int RasterGrid::weiler_scan_polygon(const std::vector<const Point *> &vertices,
-                                    const Point &p1, const Point &p2,
-                                    std::vector<PointInfo> &vertices_with_info,
-                                    std::vector<InterPointInfo> &inter_pts_info) {
+int RasterGrid::weiler_scan_polygon(
+    const std::vector<const Point *> &vertices, const Point &p1,
+    const Point &p2, std::vector<PointInfo> &vertices_with_info,
+    std::vector<InterPointInfo> &inter_pts_info) {
   int poly_size = vertices.size();
   int total_inter_pts = 0;
   bool point_on_left = false, point_on_right = false;
@@ -161,8 +161,8 @@ bool RasterGrid::weiler_clip(
   std::vector<PointInfo> vertices_with_info;
   std::vector<InterPointInfo> inter_pts_info;
 
-  int points_side = weiler_scan_polygon(vertices, p1, p2, vertices_with_info,
-                                        inter_pts_info);
+  int points_side =
+      weiler_scan_polygon(vertices, p1, p2, vertices_with_info, inter_pts_info);
   if (points_side == -1) {
     return false; // for error
   }
@@ -229,14 +229,14 @@ bool RasterGrid::weiler_clip(
           inter_pts_step = -1;
           exit_dir = Direction::RIGHT;
           polygon_vector_to_insert = &left_vertices_vectors;
-        } 
+        }
 
         while (cur_p_inter != inter_p_info.inter_point &&
                total_iters++ < max_iters) {
 
-          exit_inter_pts_idx = walk_on_polygon_vertices(
-              cur_polygon, vertices_with_info, exit_dir, enter_vertices_idx,
-              max_iters);
+          exit_inter_pts_idx =
+              walk_on_polygon_vertices(cur_polygon, vertices_with_info,
+                                       exit_dir, enter_vertices_idx, max_iters);
           if (exit_inter_pts_idx == -1) {
             std::cerr << "Error in walk_on_polygon_vertices\n";
             return false;
@@ -456,7 +456,6 @@ int RasterGrid::weiler_rasterize_poly(
       }
     }
   }
-
 
   return 1;
 }

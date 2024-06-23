@@ -113,7 +113,7 @@ bool RasterGrid::set_segment_borders_types(
     if (y_is_on_grid_row == -1) {
       return false;
     }
-    if (y_is_on_grid_row){
+    if (y_is_on_grid_row) {
       int row_idx = sequence_idx(p1.y, ymin);
       min_row_idx, max_row_idx;
       if (row_idx == 0) {
@@ -171,7 +171,7 @@ bool RasterGrid::set_segment_borders_types(
     if (y_is_on_grid_col == -1) {
       return false;
     }
-    if (y_is_on_grid_col){
+    if (y_is_on_grid_col) {
       int col_idx = sequence_idx(p1.x, xmin);
       min_col_idx, max_col_idx;
       if (col_idx == 0) {
@@ -214,9 +214,10 @@ bool RasterGrid::set_segment_borders_types(
         min_row_idx--;
       }
 
-      if (are_equal(seg_max_y, on_grid_max_y, prec_epsilon) && on_grid_max_y < ymax) {
-        // the max y of the line which overalaps a grid row is on a corner 
-        // include the higher row too 
+      if (are_equal(seg_max_y, on_grid_max_y, prec_epsilon) &&
+          on_grid_max_y < ymax) {
+        // the max y of the line which overalaps a grid row is on a corner
+        // include the higher row too
         max_row_idx++;
       }
     } else {
@@ -231,7 +232,7 @@ bool RasterGrid::set_segment_borders_types(
   std::vector<std::vector<const Point *>> empty_vec;
   RasterCellInfo weak_rcell_info = RasterCellInfo(empty_vec, weak_cell_code);
 
-  for (int i = min_row_idx; i <= max_row_idx; i++) {   
+  for (int i = min_row_idx; i <= max_row_idx; i++) {
     for (int j = min_col_idx; j <= max_col_idx; j++) {
       std::pair<int, int> j_i = {j, i};
       i_j_to_rcell_info[j_i] = weak_rcell_info;
@@ -293,7 +294,8 @@ RasterGrid::encode(std::vector<std::vector<const Point *>> &vertices_vectors,
     return BinaryCellCode(BinaryCellCode::NULL_CODE);
   }
 
-  if (vertices_vectors.size() == 1 && is_certain_full_cell(vertices_vectors[0], p1, p2)) {
+  if (vertices_vectors.size() == 1 &&
+      is_certain_full_cell(vertices_vectors[0], p1, p2)) {
     double cell_poly_area = get_polygons_area(vertices_vectors);
     if (!are_equal(cell_poly_area, cell_area, prec_epsilon)) {
       return BinaryCellCode(BinaryCellCode::NULL_CODE);

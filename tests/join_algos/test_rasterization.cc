@@ -41,14 +41,11 @@ bool test_polygon_area(
         rcell_info.cell_polygons;
     double cur_area;
 
-      if (strcmp(c_code.to_type(), "FULL") == 0)
-      {
-          cur_area = get_polygons_area(vertices_vectors);
-      }
-      else
-      {
-          cur_area = get_polygons_area(vertices_vectors);
-      }
+    if (strcmp(c_code.to_type(), "FULL") == 0) {
+      cur_area = get_polygons_area(vertices_vectors);
+    } else {
+      cur_area = get_polygons_area(vertices_vectors);
+    }
 
     clipped_poly_area += cur_area;
   }
