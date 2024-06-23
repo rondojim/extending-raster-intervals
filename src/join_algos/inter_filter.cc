@@ -110,16 +110,19 @@ bool RasterGrid::set_segment_borders_types(
     const Point &p1, const Point &p2,
     std::map<std::pair<unsigned int, unsigned int>, RasterCellInfo>
         &i_j_to_rcell_info) {
+
   unsigned int parallelism = checkParallelism(p1, p2);
   int min_col_idx = -1, max_col_idx = -1, min_row_idx = -1, max_row_idx = -1; 
-  double xmin = min_corner.x, xmax = max_corner.y, ymin = min_corner.x, ymax = max_corner.y;
+  double xmin = min_corner.x, xmax = max_corner.x, ymin = min_corner.y, ymax = max_corner.y;
   if (!parallelism) {
     return true;
   }
-
   if (parallelism == 1) {
+   
     // parallel to x axis
-    int y_is_on_grid_row = k_belongs_in_sequence(xmin, xmax, p1.y);
+    // std::cout << "xmin: " << xmin << ", xmax: " << xmax << std::endl;
+    int y_is_on_grid_row = k_belongs_in_sequence(ymin, ymax, p1.y);
+    // std::cout << "y_is_on_grid_row: " << y_is_on_grid_row << std::endl;
     if (y_is_on_grid_row == -1) {
       return false;
     }
@@ -163,10 +166,14 @@ bool RasterGrid::set_segment_borders_types(
       max_col_idx--;
 
       if (are_equal(seg_min_x, on_grid_min_x, prec_epsilon) && min_col_idx > 0) {
+        // the max x of the line which overalaps a grid column is on a corner 
+        // include the lower column too 
         min_col_idx--;
       }
 
       if (are_equal(seg_max_x, on_grid_max_x, prec_epsilon) && on_grid_max_x < xmax) {
+        // the min x of the line which overalaps a grid column is on a corner 
+        // include the higher column too 
         max_col_idx++;
       }
 
@@ -175,11 +182,10 @@ bool RasterGrid::set_segment_borders_types(
     }
   } else if (parallelism == 2) {
     // parallel to y axis
-    int y_is_on_grid_col = k_belongs_in_sequence(ymin, ymax, p1.x);
+    int y_is_on_grid_col = k_belongs_in_sequence(xmin, xmax, p1.x);
     if (y_is_on_grid_col == -1) {
       return false;
     }
-    // std::cout << "y_is_on_grid_col: " << y_is_on_grid_col << std::endl;
     if (y_is_on_grid_col){
       // std::cout << "y_is_on_grid_col: " << p1.to_str() << " - " << p2.to_str() << std::endl;
       int col_idx = sequence_idx(p1.x, xmin);
@@ -213,23 +219,28 @@ bool RasterGrid::set_segment_borders_types(
         return false;
       }
 
+      // std::cout << "on_grid_min_y: " << on_grid_min_y << ", ymin: " << ymin << std::endl;
+      // std::cout << "on_grid_max_y: " << on_grid_max_y << ", ymin: " << ymin << std::endl;
       min_row_idx = sequence_idx(on_grid_min_y, ymin);
       max_row_idx = sequence_idx(on_grid_max_y, ymin);
+      // std::cout << "min_row_idx: " << min_row_idx << ", max_row_idx: " << max_row_idx << std::endl;
 
       // if we have rows min, max idxs i, j, i < j then the cells'
       // position in map are i, i+1, ..., j-1
       max_row_idx--;
 
       if (are_equal(seg_min_y, on_grid_min_y, prec_epsilon) && min_row_idx > 0) {
+        // the min y of the line which overalaps a grid row is on a corner 
+        // include the lower row too 
         min_row_idx--;
       }
 
+      
       if (are_equal(seg_max_y, on_grid_max_y, prec_epsilon) && on_grid_max_y < ymax) {
+        // the max y of the line which overalaps a grid row is on a corner 
+        // include the higher row too 
         max_row_idx++;
       }
-      // std::cout << "min_col_idx: " << min_col_idx << ", max_col_idx: " <<
-      // max_col_idx << ", min_row_idx: " << min_row_idx << ", max_row_idx: " <<
-      // max_row_idx << std::endl;
 
     } else {
       return true;
@@ -242,8 +253,10 @@ bool RasterGrid::set_segment_borders_types(
   BinaryCellCode weak_cell_code = BinaryCellCode(BinaryCellCode::WEAK_R);
   std::vector<std::vector<const Point *>> empty_vec;
   RasterCellInfo weak_rcell_info = RasterCellInfo(empty_vec, weak_cell_code);
+
   // std::cout << "min_row_idx: " << min_row_idx << ", max_row_idx: " << max_row_idx << std::endl;
   // std::cout << "min_col_idx: " << min_col_idx << ", max_col_idx: " << max_col_idx << std::endl;
+
   for (int i = min_row_idx; i <= max_row_idx; i++) {   
     // double y1 = min_corner.y + j * step, y2 = min_corner.y + (j+1) * step;
     for (int j = min_col_idx; j <= max_col_idx; j++) {
