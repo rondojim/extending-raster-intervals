@@ -8,8 +8,8 @@ int main() {
   // std::string lhs_f_name("../../dataset_files/OSM_filtered_datasets/O6OC");
   // std::string lhs_f_name("../datasets/O5AF.txt");
   // std::string rhs_f_name("../datasets/O6AF.txt");
-  std::string rhs_f_name("../../dataset_files/OSM_filtered_datasets/O5EU");
-  std::string lhs_f_name("../../dataset_files/OSM_filtered_datasets/O6EU");
+  std::string rhs_f_name("../../dataset_files/OSM_filtered_datasets/O5OC");
+  std::string lhs_f_name("../../dataset_files/OSM_filtered_datasets/O6OC");
   std::pair<std::vector<Polygon>, std::vector<Polygon>> intersections;
 
   find_interesctions(N, lhs_f_name, rhs_f_name, intersections, -1);

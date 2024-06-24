@@ -1,3 +1,4 @@
+#include "../../include/mbr_algos/axis_intersection.h"
 #include "../../include/utils/compressing.h"
 #include "../../include/utils/geometry_types.h"
 #include "../../include/utils/minimum_bounding_rectangle.h"
@@ -188,6 +189,18 @@ static void filter_polygons(std::vector<mbr> &mlhs, std::vector<mbr> &mrhs,
   // Store results in the result pair
 }
 
+static void swap_axis(std::vector<mbr> &mlhs, std::vector<mbr> &mrhs) {
+
+  for (auto &it : mlhs) {
+    std::swap(it.minc.first, it.minc.second);
+    std::swap(it.maxc.first, it.maxc.second);
+  }
+  for (auto &it : mrhs) {
+    std::swap(it.minc.first, it.minc.second);
+    std::swap(it.maxc.first, it.maxc.second);
+  }
+}
+
 // Function to perform a forward scan for MBR intersection using a brute force
 // approach
 void forward_scan(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
@@ -203,6 +216,14 @@ void forward_scan(std::vector<Polygon> &lhs, std::vector<Polygon> &rhs,
   std::vector<mbr> mrhs;
 
   create_mbr_vectors(lhs, rhs, mlhs, mrhs, compress);
+
+  long long x_inter = calculate_axis_intersection(mlhs, mrhs, true, MAXX);
+  long long y_inter = calculate_axis_intersection(mlhs, mrhs, false, MAXY);
+
+  if (x_inter > y_inter) {
+    swap_axis(mlhs, mrhs);
+    std::swap(MAXX, MAXY);
+  }
 
   // Sort MBRs
   std::sort(mlhs.begin(), mlhs.end(), compare_mbr);
